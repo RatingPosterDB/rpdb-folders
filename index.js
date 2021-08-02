@@ -684,9 +684,15 @@ function addMediaFolder(type, folder, label, badges, badgePos, badgeSize, autoBa
 		if (badgePos && badgePos != 'none' && badgePos != 'left') {
 			settings.badgePositions[folder] = badgePos
 			config.set('badgePositions', settings.badgePositions)
+		} else {
+			delete settings.badgePositions[folder]
+			config.set('badgePositions', settings.badgePositions)
 		}
 		if (badgeSize && badgeSize != 'none' && badgeSize != 'normal') {
 			settings.badgeSizes[folder] = badgeSize
+			config.set('badgeSizes', settings.badgeSizes)
+		} else {
+			delete settings.badgeSizes[folder]
 			config.set('badgeSizes', settings.badgeSizes)
 		}
 		addToWatcher([folder])
@@ -1637,9 +1643,15 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 			if (mediaBadgePos && mediaBadgePos != 'none') {
 				settings.itemBadgePositions[imdbId] = mediaBadgePos
 				config.set('itemBadgePositions', settings.itemBadgePositions)
+			} else {
+				delete settings.itemBadgePositions[imdbId]
+				config.set('itemBadgePositions', settings.itemBadgePositions)
 			}
 			if (mediaBadgeSize && mediaBadgeSize != 'normal') {
 				settings.itemBadgeSizes[imdbId] = mediaBadgeSize
+				config.set('itemBadgeSizes', settings.itemBadgeSizes)
+			} else {
+				delete settings.itemBadgeSizes[imdbId]
 				config.set('itemBadgeSizes', settings.itemBadgeSizes)
 			}
 			res.setHeader('Content-Type', 'application/json')
