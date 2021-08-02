@@ -42,15 +42,26 @@ function zipBuildFolder() {
 	})
 }
 
+function removeUnneccesaryFfprobeBuilds() {
+	let ffprobePlatforms = ['darwin', 'linux', 'win32']
+	const idx = ffprobePlatforms.indexOf(process.platform)
+	if (idx !== -1) ffprobePlatforms.splice(idx, 1)
+	ffprobePlatforms.forEach(el => {
+		const fold = './' + buildFolderName + '/node_modules/ffprobe-static/bin/' + el
+		if (fs.existsSync(fold)) fs.rmdirSync(fold, { recursive: true })
+	})
+	zipBuildFolder()
+}
+
 function removeUnnecessaryFiles() {
 	console.log('Removing Unnecessary Files')
 	fs.unlinkSync('./' + buildFolderName + '/package.json')
 	try {
 		fs.unlinkSync('./' + buildFolderName + '/package-lock.json')
-		zipBuildFolder()
+		removeUnneccesaryFfprobeBuilds()
 	} catch(e) {
 		console.log('NPM builds failed, copying builds from node_modules folder')
-		let builds = ['drivelist/build']
+		let builds = ['drivelist/build', 'ffprobe-static/bin']
 		function copyBuilds() {
 			if (builds.length) {
 				const moduleBuildFolder = builds.shift()
@@ -60,7 +71,7 @@ function removeUnnecessaryFiles() {
 					copyBuilds()
 				})
 			} else
-				zipBuildFolder()
+				removeUnneccesaryFfprobeBuilds()
 		}
 		copyBuilds()
 	}
@@ -78,7 +89,7 @@ function copyStaticFolder() {
 
 function createExternalPackageJSON() {
 	console.log('Creating package.json for External Modules')
-	fs.writeFileSync('./' + buildFolderName + '/package.json', '{\n  "name": "rpdb-folders",\n  "version": "0.0.1",\n  "dependencies": {\n    "drivelist": "9.2.4"\n  }\n}')
+	fs.writeFileSync('./' + buildFolderName + '/package.json', '{\n  "name": "rpdb-folders",\n  "version": "0.0.1",\n  "dependencies": {\n    "drivelist": "9.2.4",\n    ffprobe-static": "3.0.0"\n  }\n}')
 	console.log('Finished!')
 	installExternalModules()
 }

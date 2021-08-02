@@ -39,9 +39,11 @@ let map = {
     customPosters: {},
     labels: {},
     badges: {},
+    autoBadges: {},
     badgePositions: {},
     itemLabels: {},
     itemBadges: {},
+    itemAutoBadges: {},
     itemBadgePositions: {},
     scanOrder: 'imdb-tmdb',
     cacheMatches: true,
@@ -57,6 +59,7 @@ let map = {
     pollingInterval: 100,
     posterLang: { movie: 'en', series: 'en' },
     baseUrl: '/',
+    checkForLocalImdbId: false,
 }
 
 function loadUserConfig(err, obj) {

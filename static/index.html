@@ -487,152 +487,617 @@
                     Up to 4 badges can be displayed on one poster.
                 </div>
                 <br/><br/><br/>
-                <form class="pure-form badge-form">
-                    <b>Badge Position</b><br/><br/>
-                    <select id="badge-position">
-                        <option value="left">Top Left</option>
-                        <option value="center">Top Center</option>
-                        <option value="right">Top Right</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Video Quality</b><br/><br/>
-                    <i style="opacity: 0.7">4K, 1080p, 720p, etc</i>
-                    <br/><br/>
-                    <select id="video-quality-badges">
-                        <option value="none">None</option>
-                        <option value="4k">4K (Ultra HD)</option>
-                        <option value="4kupscaled">4K (Upscaled)</option>
-                        <option value="1080p">1080p (Full HD)</option>
-                        <option value="720p">720p (HD)</option>
-                        <option value="2k">2K (Quad HD)</option>
-                        <option value="5k">5K (Ultra HD)</option>
-                        <option value="8k">8K (Ultra HD)</option>
-                        <option value="480p">480p (SD)</option>
-                        <option value="360p">360p (SD)</option>
-                        <option value="240p">240p (SD)</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>3D Video Badge</b><br/><br/>
-                    <select id="3d-badges">
-                        <option value="none">None</option>
-                        <option value="3d">3D (Stereoscopic)</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Color Range</b><br/><br/>
-                    <i style="opacity: 0.7">HDR, Dolby Vision, etc</i>
-                    <br/><br/>
-                    <select id="hdr-badges">
-                        <option value="none">None</option>
-                        <option value="hdrcolor">HDR (True Color) [colorful]</option>
-                        <option value="hdr">HDR (True Color) [silver]</option>
-                        <option value="dolbyvision">Dolby Vision</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Video Source</b><br/><br/>
-                    <i style="opacity: 0.7">Remux, BluRay, DVD, Web, etc</i>
-                    <br/><br/>
-                    <select id="remux-badges">
-                        <option value="none">None</option>
-                        <option value="remuxgold">REMUX (Lossless) [gold]</option>
-                        <option value="remux">REMUX (Lossless) [silver]</option>
-                        <option value="bluray">BluRay (Format)</option>
-                        <option value="dvd">DVD (Format)</option>
-                        <option value="web">Web (Format)</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Video Codec</b><br/><br/>
-                    <i style="opacity: 0.7">h264, h265, etc</i>
-                    <br/><br/>
-                    <select id="codec-badges">
-                        <option value="none">None</option>
-                        <option value="h264">h264 (AVC)</option>
-                        <option value="h265">h265 (HEVC)</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Video Container</b><br/><br/>
-                    <i style="opacity: 0.7">mkv, mp4, avi, etc</i>
-                    <br/><br/>
-                    <select id="container-badges">
-                        <option value="none">None</option>
-                        <option value="mkv">MKV (Matroska)</option>
-                        <option value="mp4">MP4 (MPEG-4)</option>
-                        <option value="avi">AVI (A/V Interleave)</option>
-                    </select>
-                    <br/><br/><br/>
-                    <b>Audio</b><br/><br/>
-                    <select id="audio-types">
-                        <option value="none-audio">None</option>
-                        <option value="standard-audio">Standard</option>
-                        <option value="dd-audio">Dolby Digital</option>
-                        <option value="ddp-audio">Dolby Digital Plus</option>
-                        <option value="truehd-audio">Dolby TrueHD</option>
-                        <option value="lpcm-audio">Linear PCM</option>
-                        <option value="atmos-audio">Atmos</option>
-                    </select>
-                    <div id="standard-audio" style="display: none">
-                        <br/>
-                        <select id="standard-audio-badges">
-                            <option value="none">None</option>
-                            <option value="audio20">2.0 (Stereo)</option>
-                            <option value="audio51">5.1 (Surround)</option>
-                            <option value="audio71">7.1 (Surround)</option>
-                        </select>
-                    </div>
-                    <div id="dd-audio" style="display: none">
-                        <br/>
-                        <select id="dd-audio-badges">
-                            <option value="none">None</option>
-                            <option value="dd20">DD2.0 (Stereo)</option>
-                            <option value="dd51">DD5.1 (Surround)</option>
-                        </select>
-                    </div>
-                    <div id="ddp-audio" style="display: none">
-                        <br/>
-                        <select id="ddp-audio-badges">
-                            <option value="none">None</option>
-                            <option value="ddp20">DDP2.0 (Stereo)</option>
-                            <option value="ddp51">DDP5.1 (Surround)</option>
-                        </select>
-                    </div>
-                    <div id="truehd-audio" style="display: none">
-                        <br/>
-                        <select id="truehd-audio-badges">
-                            <option value="none">None</option>
-                            <option value="truehd51lossless">TrueHD5.1 (Lossless)</option>
-                            <option value="truehd51surround">TrueHD5.1 (Surround)</option>
-                            <option value="truehd71lossless">TrueHD7.1 (Lossless)</option>
-                            <option value="truehd71surround">TrueHD7.1 (Surround)</option>
-                        </select>
-                    </div>
-                    <div id="lpcm-audio" style="display: none">
-                        <br/>
-                        <select id="lpcm-audio-badges">
-                            <option value="none">None</option>
-                            <option value="pcm51lossless">PCM5.1 (Lossless)</option>
-                            <option value="pcm51surround">PCM5.1 (Surround)</option>
-                            <option value="pcm71lossless">PCM7.1 (Lossless)</option>
-                            <option value="pcm71surround">PCM7.1 (Surround)</option>
-                        </select>
-                    </div>
-                    <div id="atmos-audio" style="display: none">
-                        <br/>
-                        <select id="atmos-audio-badges">
-                            <option value="none">None</option>
-                            <option value="atmos3dsound">Atmos (3D Sound)</option>
-                            <option value="atmossurround">Atmos (Surround)</option>
-                        </select>
-                    </div>
-                    <br/><br/><br/>
-                    <b>Personal Rating</b><br/><br/>
-                    <select id="pr-types">
-                        <option value="none">None</option>
-                        <option value="5stars">5 Stars (Perfect)</option>
-                        <option value="4stars">4 Stars (Great)</option>
-                        <option value="3stars">3 Stars (Good)</option>
-                        <option value="2stars">2 Stars (Bad)</option>
-                        <option value="1stars">1 Star (Horrible)</option>
+                <form class="pure-form">
+                    <b>Badge Selection</b><br/><br/>
+                    <select id="badge-manual-or-auto">
+                        <option value="manual">Manual</option>
+                        <option value="auto">Automatic</option>
                     </select>
                 </form>
+                <br/>
+                <div id="badge-auto" style="display: none">
+                    <form class="pure-form badge-auto-form">
+                        <b>Badge Position</b><br/><br/>
+                        <select id="badge-auto-position">
+                            <option value="left">Top Left</option>
+                            <option value="center">Top Center</option>
+                            <option value="right">Top Right</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Detect Badges For</b><br/><br/>
+                        <label for="badges-auto-video-quality" class="pure-checkbox" style="display: inline-block">
+                            <input type="checkbox" id="badges-auto-video-quality" value="videoQuality" />&nbsp;&nbsp;Video Quality (4k, 1080p, etc)</label>
+                        <br/><br/>
+                        <label for="badges-auto-color-range" class="pure-radio" style="display: inline-block">
+                            <input type="checkbox" id="badges-auto-color-range" value="colorRange" />&nbsp;&nbsp;Color Range (HDR / Dolby Vision)</label>
+                        <br/><br/>
+                        <label for="badges-auto-video-codec" class="pure-radio" style="display: inline-block">
+                            <input type="checkbox" id="badges-auto-video-codec" value="videoCodec" />&nbsp;&nbsp;Video Codec (h264 / h265)</label>
+                        <br/><br/>
+                        <label for="badges-auto-audio-channels" class="pure-radio" style="display: inline-block">
+                            <input type="checkbox" id="badges-auto-audio-channels" value="audioChannels" />&nbsp;&nbsp;Audio Channels (2.0 / 5.1 / 7.1)</label>
+                        <br/><br/>
+                        <label for="badges-auto-video-source" class="pure-radio" style="display: inline-block">
+                            <input type="checkbox" id="badges-auto-video-source" value="videoSource" />&nbsp;&nbsp;Video Source (Remux, Web, BluRay, etc)</label>
+                        <br/><br/><br/>
+                        <b>Country Badge</b><br/><br/>
+                        <i style="opacity: 0.7">Adds country flag if audio / subtitle exists for language</i>
+                        <br/><br/>
+                        <div style="text-align: center">
+                            <select id="country-flag-badge">
+                                <option value="none">
+                                    None
+                                </option><option value="aa_ET">
+                                    Afar
+                                </option><option value="af_ZA">
+                                    Afrikaans
+                                </option><option value="sq_AL">
+                                    Albanian
+                                </option><option value="am_ET">
+                                    Amharic
+                                </option><option value="ar_DZ">
+                                    Arabic (Algeria)
+                                </option><option value="ar_BH">
+                                    Arabic (Bahrain)
+                                </option><option value="ar_EG">
+                                    Arabic (Egypt)
+                                </option><option value="ar_IQ">
+                                    Arabic (Iraq)
+                                </option><option value="ar_JO">
+                                    Arabic (Jordan)
+                                </option><option value="ar_KW">
+                                    Arabic (Kuwait)
+                                </option><option value="ar_LB">
+                                    Arabic (Lebanon)
+                                </option><option value="ar_LY">
+                                    Arabic (Libya)
+                                </option><option value="ar_MA">
+                                    Arabic (Morocco)
+                                </option><option value="ar_OM">
+                                    Arabic (Oman)
+                                </option><option value="ar_QA">
+                                    Arabic (Qatar)
+                                </option><option value="ar_SA">
+                                    Arabic (Saudi Arabia)
+                                </option><option value="ar_SD">
+                                    Arabic (Sudan)
+                                </option><option value="ar_SY">
+                                    Arabic (Syria)
+                                </option><option value="ar_TN">
+                                    Arabic (Tunisia)
+                                </option><option value="ar_AE">
+                                    Arabic (Uae)
+                                </option><option value="ar_YE">
+                                    Arabic (Yemen)
+                                </option><option value="hy_AM">
+                                    Armenian
+                                </option><option value="as_IN">
+                                    Assamese
+                                </option><option value="ay_PE">
+                                    Aymara
+                                </option><option value="az_AZ">
+                                    Azeri
+                                </option><option value="eu_ES">
+                                    Basque
+                                </option><option value="be_BY">
+                                    Belarusian
+                                </option><option value="bn_BD">
+                                    Bengali
+                                </option><option value="bi_VU">
+                                    Bislama
+                                </option><option value="bg_BG">
+                                    Bulgarian
+                                </option><option value="my_MM">
+                                    Burmese
+                                </option><option value="km_KH">
+                                    Cambodian
+                                </option><option value="ca_ES">
+                                    Catalan
+                                </option><option value="zh_TW">
+                                    Chinese
+                                </option><option value="zh_HK">
+                                    Chinese (Hongkong)
+                                </option><option value="zh_MO">
+                                    Chinese (Macau)
+                                </option><option value="zh_CN">
+                                    Chinese (Simplified)
+                                </option><option value="zh_SG">
+                                    Chinese (Singapore)
+                                </option><option value="zh_TW">
+                                    Chinese (Taiwan)
+                                </option><option value="zh_TW">
+                                    Chinese (Traditional)
+                                </option><option value="co_FR">
+                                    Corsican (France)
+                                </option><option value="co_IT">
+                                    Corsican (Italy)
+                                </option><option value="hr_HR">
+                                    Croatian
+                                </option><option value="cs_CZ">
+                                    Czech
+                                </option><option value="da_DK">
+                                    Danish
+                                </option><option value="nl_NL">
+                                    Dutch
+                                </option><option value="nl_BE">
+                                    Dutch (Belgian)
+                                </option><option value="en_US">
+                                    English (US)
+                                </option><option value="en_GB">
+                                    English (UK)
+                                </option><option value="en_AU">
+                                    English (Australia)
+                                </option><option value="en_BZ">
+                                    English (Belize)
+                                </option><option value="en_BW">
+                                    English (Botswana)
+                                </option><option value="en_CA">
+                                    English (Canada)
+                                </option><option value="en_CB">
+                                    English (Caribbean)
+                                </option><option value="en_DK">
+                                    English (Denmark)
+                                </option><option value="en_IE">
+                                    English (Eire)
+                                </option><option value="en_JM">
+                                    English (Jamaica)
+                                </option><option value="en_NZ">
+                                    English (New Zealand)
+                                </option><option value="en_PH">
+                                    English (Philippines)
+                                </option><option value="en_ZA">
+                                    English (South Africa)
+                                </option><option value="en_TT">
+                                    English (Trinidad)
+                                </option><option value="en_ZW">
+                                    English (Zimbabwe)
+                                </option><option value="et_EE">
+                                    Estonian
+                                </option><option value="fo_FO">
+                                    Faeroese
+                                </option><option value="fa_IR">
+                                    Farsi
+                                </option><option value="fj_FJ">
+                                    Fiji
+                                </option><option value="fi_FI">
+                                    Finnish
+                                </option><option value="fr_FR">
+                                    French
+                                </option><option value="fr_BE">
+                                    French (Belgian)
+                                </option><option value="fr_CA">
+                                    French (Canadian)
+                                </option><option value="fr_LU">
+                                    French (Luxembourg)
+                                </option><option value="fr_MC">
+                                    French (Monaco)
+                                </option><option value="fr_CH">
+                                    French (Swiss)
+                                </option><option value="fy_NL">
+                                    Frisian
+                                </option><option value="gl_ES">
+                                    Galician
+                                </option><option value="ka_GE">
+                                    Georgian
+                                </option><option value="de_DE">
+                                    German
+                                </option><option value="de_AT">
+                                    German (Austrian)
+                                </option><option value="de_BE">
+                                    German (Belgium)
+                                </option><option value="de_LI">
+                                    German (Liechtenstein)
+                                </option><option value="de_LU">
+                                    German (Luxembourg)
+                                </option><option value="de_CH">
+                                    German (Swiss)
+                                </option><option value="el_GR">
+                                    Greek
+                                </option><option value="kl_GL">
+                                    Greenlandic
+                                </option><option value="gn_PY">
+                                    Guarani
+                                </option><option value="gu_IN">
+                                    Gujarati
+                                </option><option value="ha_NG">
+                                    Hausa
+                                </option><option value="he_IL">
+                                    Hebrew
+                                </option><option value="hi_IN">
+                                    Hindi
+                                </option><option value="hu_HU">
+                                    Hungarian
+                                </option><option value="is_IS">
+                                    Icelandic
+                                </option><option value="id_ID">
+                                    Indonesian
+                                </option><option value="iu_CA">
+                                    Inuktitut
+                                </option><option value="ga_IE">
+                                    Irish
+                                </option><option value="it_IT">
+                                    Italian
+                                </option><option value="it_CH">
+                                    Italian (Swiss)
+                                </option><option value="ja_JP">
+                                    Japanese
+                                </option><option value="jw_ID">
+                                    Javanese
+                                </option><option value="kn_IN">
+                                    Kannada
+                                </option><option value="ks_PK">
+                                    Kashmiri (Pakistan)
+                                </option><option value="ks_IN">
+                                    Kashmiri (India)
+                                </option><option value="kk_KZ">
+                                    Kazakh
+                                </option><option value="kw_GB">
+                                    Kernewek
+                                </option><option value="rw_RW">
+                                    Kinyarwanda
+                                </option><option value="ky_KG">
+                                    Kirghiz
+                                </option><option value="rn_BI">
+                                    Kirundi
+                                </option><option value="ko_KR">
+                                    Korean
+                                </option><option value="ku_TR">
+                                    Kurdish
+                                </option><option value="lo_LA">
+                                    Laothian
+                                </option><option value="lv_LV">
+                                    Latvian
+                                </option><option value="ln_CD">
+                                    Lingala
+                                </option><option value="lt_LT">
+                                    Lithuanian
+                                </option><option value="mk_MK">
+                                    Macedonian
+                                </option><option value="mg_MG">
+                                    Malagasy
+                                </option><option value="ms_MY">
+                                    Malay
+                                </option><option value="ml_IN">
+                                    Malayalam
+                                </option><option value="ms_BN">
+                                    Malay (Brunei Darussalam)
+                                </option><option value="ms_MY">
+                                    Malay (Malaysia)
+                                </option><option value="mt_MT">
+                                    Maltese
+                                </option><option value="mi_NZ">
+                                    Maori
+                                </option><option value="mr_IN">
+                                    Marathi
+                                </option><option value="mo_MD">
+                                    Moldavian
+                                </option><option value="mn_MN">
+                                    Mongolian
+                                </option><option value="na_NR">
+                                    Nauru
+                                </option><option value="ne_NP">
+                                    Nepali
+                                </option><option value="ne_IN">
+                                    Nepali (India)
+                                </option><option value="nb_NO">
+                                    Norwegian (Bokmal)
+                                </option><option value="nn_NO">
+                                    Norwegian (Nynorsk)
+                                </option><option value="oc_ES">
+                                    Occitan
+                                </option><option value="or_IN">
+                                    Oriya
+                                </option><option value="om_ET">
+                                    (Afan) Oromo
+                                </option><option value="ps_AF">
+                                    Pashto, Pushto
+                                </option><option value="pl_PL">
+                                    Polish
+                                </option><option value="pt_PT">
+                                    Portuguese
+                                </option><option value="pt_BR">
+                                    Portuguese (Brazilian)
+                                </option><option value="pa_PK">
+                                    Punjabi
+                                </option><option value="qu_PE">
+                                    Quechua
+                                </option><option value="rm_CH">
+                                    Rhaeto-Romance
+                                </option><option value="ro_RO">
+                                    Romanian
+                                </option><option value="ru_RU">
+                                    Russian
+                                </option><option value="ru_UA">
+                                    Russian (Ukraine)
+                                </option><option value="se_NO">
+                                    Northern Sami
+                                </option><option value="sm_WS">
+                                    Samoan
+                                </option><option value="sg_CF">
+                                    Sangho
+                                </option><option value="sa_IN">
+                                    Sanskrit
+                                </option><option value="gd_GB-SCT">
+                                    Scots Gaelic
+                                </option><option value="sr_SR">
+                                    Serbian
+                                </option><option value="sr_SR">
+                                    Serbian
+                                </option><option value="st_LS">
+                                    Sesotho
+                                </option><option value="tn_ZA">
+                                    Setswana
+                                </option><option value="sn_ZW">
+                                    Shona
+                                </option><option value="sd_PK">
+                                    Sindhi
+                                </option><option value="si_LK">
+                                    Sinhalese
+                                </option><option value="ss_SZ">
+                                    Siswati
+                                </option><option value="sk_SK">
+                                    Slovak
+                                </option><option value="sl_SI">
+                                    Slovenian
+                                </option><option value="so_SO">
+                                    Somali
+                                </option><option value="es_ES">
+                                    Spanish
+                                </option><option value="es_AR">
+                                    Spanish (Argentina)
+                                </option><option value="es_BO">
+                                    Spanish (Bolivia)
+                                </option><option value="es_CL">
+                                    Spanish (Chile)
+                                </option><option value="es_CO">
+                                    Spanish (Colombia)
+                                </option><option value="es_CR">
+                                    Spanish (Costa Rica)
+                                </option><option value="es_DO">
+                                    Spanish (Dominican republic)
+                                </option><option value="es_EC">
+                                    Spanish (Ecuador)
+                                </option><option value="es_SV">
+                                    Spanish (El Salvador)
+                                </option><option value="es_GT">
+                                    Spanish (Guatemala)
+                                </option><option value="es_HN">
+                                    Spanish (Honduras)
+                                </option><option value="es_MX">
+                                    Spanish (Mexican)
+                                </option><option value="es_ES">
+                                    Spanish (Modern)
+                                </option><option value="es_NI">
+                                    Spanish (Nicaragua)
+                                </option><option value="es_PA">
+                                    Spanish (Panama)
+                                </option><option value="es_PY">
+                                    Spanish (Paraguay)
+                                </option><option value="es_PE">
+                                    Spanish (Peru)
+                                </option><option value="es_PR">
+                                    Spanish (Puerto Rico)
+                                </option><option value="es_UY">
+                                    Spanish (Uruguay)
+                                </option><option value="es_US">
+                                    Spanish (U.S.)
+                                </option><option value="es_VE">
+                                    Spanish (Venezuela)
+                                </option><option value="su_ID">
+                                    Sundanese
+                                </option><option value="sw_KE">
+                                    Swahili
+                                </option><option value="sv_SE">
+                                    Swedish
+                                </option><option value="sv_FI">
+                                    Swedish (Finland)
+                                </option><option value="tl_PH">
+                                    Tagalog
+                                </option><option value="tg_TJ">
+                                    Tajik
+                                </option><option value="ta_IN">
+                                    Tamil
+                                </option><option value="tt_RU">
+                                    Tatar
+                                </option><option value="te_IN">
+                                    Telugu
+                                </option><option value="th_TH">
+                                    Thai
+                                </option><option value="bo_CH">
+                                    Tibetan
+                                </option><option value="ti_ER">
+                                    Tigrinya
+                                </option><option value="to_TO">
+                                    Tonga
+                                </option><option value="ts_ZA">
+                                    Tsonga
+                                </option><option value="tr_TR">
+                                    Turkish
+                                </option><option value="tk_TM">
+                                    Turkmen
+                                </option><option value="tw_GH">
+                                    Twi
+                                </option><option value="ug_TR">
+                                    Uighur
+                                </option><option value="uk_UA">
+                                    Ukrainian
+                                </option><option value="ur_IN">
+                                    Urdu (India)
+                                </option><option value="ur_PK">
+                                    Urdu (Pakistan)
+                                </option><option value="uz_UZ">
+                                    Uzbek
+                                </option><option value="ca_ES">
+                                    Valencian
+                                </option><option value="vi_VN">
+                                    Vietnamese
+                                </option><option value="cy_GB-WLS">
+                                    Welsh
+                                </option><option value="wo_SN">
+                                    Wolof
+                                </option><option value="xh_ZA">
+                                    Xhosa
+                                </option><option value="yi_DE">
+                                    Yiddish
+                                </option><option value="yo_NG">
+                                    Yoruba
+                                </option><option value="za_CN">
+                                    Zhuang
+                                </option><option value="zu_ZA">
+                                    Zulu
+                                </option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div id="badge-manual">
+                    <form class="pure-form badge-form">
+                        <b>Badge Position</b><br/><br/>
+                        <select id="badge-position">
+                            <option value="left">Top Left</option>
+                            <option value="center">Top Center</option>
+                            <option value="right">Top Right</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Video Quality</b><br/><br/>
+                        <i style="opacity: 0.7">4K, 1080p, 720p, etc</i>
+                        <br/><br/>
+                        <select id="video-quality-badges">
+                            <option value="none">None</option>
+                            <option value="4k">4K (Ultra HD)</option>
+                            <option value="4kupscaled">4K (Upscaled)</option>
+                            <option value="1080p">1080p (Full HD)</option>
+                            <option value="720p">720p (HD)</option>
+                            <option value="2k">2K (Quad HD)</option>
+                            <option value="5k">5K (Ultra HD)</option>
+                            <option value="8k">8K (Ultra HD)</option>
+                            <option value="480p">480p (SD)</option>
+                            <option value="360p">360p (SD)</option>
+                            <option value="240p">240p (SD)</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>3D Video Badge</b><br/><br/>
+                        <select id="3d-badges">
+                            <option value="none">None</option>
+                            <option value="3d">3D (Stereoscopic)</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Color Range</b><br/><br/>
+                        <i style="opacity: 0.7">HDR, Dolby Vision, etc</i>
+                        <br/><br/>
+                        <select id="hdr-badges">
+                            <option value="none">None</option>
+                            <option value="hdrcolor">HDR (True Color) [colorful]</option>
+                            <option value="hdr">HDR (True Color) [silver]</option>
+                            <option value="dolbyvision">Dolby Vision</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Video Source</b><br/><br/>
+                        <i style="opacity: 0.7">Remux, BluRay, DVD, Web, etc</i>
+                        <br/><br/>
+                        <select id="remux-badges">
+                            <option value="none">None</option>
+                            <option value="remuxgold">REMUX (Lossless) [gold]</option>
+                            <option value="remux">REMUX (Lossless) [silver]</option>
+                            <option value="bluray">BluRay (Format)</option>
+                            <option value="dvd">DVD (Format)</option>
+                            <option value="web">Web (Format)</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Video Codec</b><br/><br/>
+                        <i style="opacity: 0.7">h264, h265, etc</i>
+                        <br/><br/>
+                        <select id="codec-badges">
+                            <option value="none">None</option>
+                            <option value="h264">h264 (AVC)</option>
+                            <option value="h265">h265 (HEVC)</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Video Container</b><br/><br/>
+                        <i style="opacity: 0.7">mkv, mp4, avi, etc</i>
+                        <br/><br/>
+                        <select id="container-badges">
+                            <option value="none">None</option>
+                            <option value="mkv">MKV (Matroska)</option>
+                            <option value="mp4">MP4 (MPEG-4)</option>
+                            <option value="avi">AVI (A/V Interleave)</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Audio</b><br/><br/>
+                        <select id="audio-types">
+                            <option value="none-audio">None</option>
+                            <option value="standard-audio">Standard</option>
+                            <option value="dd-audio">Dolby Digital</option>
+                            <option value="ddp-audio">Dolby Digital Plus</option>
+                            <option value="truehd-audio">Dolby TrueHD</option>
+                            <option value="lpcm-audio">Linear PCM</option>
+                            <option value="atmos-audio">Atmos</option>
+                        </select>
+                        <div id="standard-audio" style="display: none">
+                            <br/>
+                            <select id="standard-audio-badges">
+                                <option value="none">None</option>
+                                <option value="audio20">2.0 (Stereo)</option>
+                                <option value="audio51">5.1 (Surround)</option>
+                                <option value="audio71">7.1 (Surround)</option>
+                            </select>
+                        </div>
+                        <div id="dd-audio" style="display: none">
+                            <br/>
+                            <select id="dd-audio-badges">
+                                <option value="none">None</option>
+                                <option value="dd20">DD2.0 (Stereo)</option>
+                                <option value="dd51">DD5.1 (Surround)</option>
+                            </select>
+                        </div>
+                        <div id="ddp-audio" style="display: none">
+                            <br/>
+                            <select id="ddp-audio-badges">
+                                <option value="none">None</option>
+                                <option value="ddp20">DDP2.0 (Stereo)</option>
+                                <option value="ddp51">DDP5.1 (Surround)</option>
+                            </select>
+                        </div>
+                        <div id="truehd-audio" style="display: none">
+                            <br/>
+                            <select id="truehd-audio-badges">
+                                <option value="none">None</option>
+                                <option value="truehd51lossless">TrueHD5.1 (Lossless)</option>
+                                <option value="truehd51surround">TrueHD5.1 (Surround)</option>
+                                <option value="truehd71lossless">TrueHD7.1 (Lossless)</option>
+                                <option value="truehd71surround">TrueHD7.1 (Surround)</option>
+                            </select>
+                        </div>
+                        <div id="lpcm-audio" style="display: none">
+                            <br/>
+                            <select id="lpcm-audio-badges">
+                                <option value="none">None</option>
+                                <option value="pcm51lossless">PCM5.1 (Lossless)</option>
+                                <option value="pcm51surround">PCM5.1 (Surround)</option>
+                                <option value="pcm71lossless">PCM7.1 (Lossless)</option>
+                                <option value="pcm71surround">PCM7.1 (Surround)</option>
+                            </select>
+                        </div>
+                        <div id="atmos-audio" style="display: none">
+                            <br/>
+                            <select id="atmos-audio-badges">
+                                <option value="none">None</option>
+                                <option value="atmos3dsound">Atmos (3D Sound)</option>
+                                <option value="atmossurround">Atmos (Surround)</option>
+                            </select>
+                        </div>
+                        <br/><br/><br/>
+                        <b>Personal Rating</b><br/><br/>
+                        <select id="pr-types">
+                            <option value="none">None</option>
+                            <option value="5stars">5 Stars (Perfect)</option>
+                            <option value="4stars">4 Stars (Great)</option>
+                            <option value="3stars">3 Stars (Good)</option>
+                            <option value="2stars">2 Stars (Bad)</option>
+                            <option value="1stars">1 Star (Horrible)</option>
+                        </select>
+                    </form>
+                </div>
                 <br/><br/><br/>
             </div>
             <div style="text-align: center">
@@ -2054,25 +2519,20 @@
                         }
                     });
                     $('#badge-or-label').on('change', function() {
-                        $('#badge-position').val($('#badge-position option:first').val())
-                        $('#video-quality-badges').val($('#video-quality-badges option:first').val())
-                        $('#3d-badges').val($('#3d-badges option:first').val())
-                        $('#hdr-badges').val($('#hdr-badges option:first').val())
-                        $('#remux-badges').val($('#remux-badges option:first').val())
-                        $('#codec-badges').val($('#codec-badges option:first').val())
-                        $('#container-badges').val($('#container-badges option:first').val())
-                        $('#audio-types').val($('#audio-types option:first').val())
-                        $('#pr-types').val($('#pr-types option:first').val())
-                        Array.from(document.getElementById('audio-types').options).forEach(el => {
-                            if (el.value != 'none-audio') {
-                                $('#' + el.value).hide()
-                                $('#' + el.value + ' select').val($('#' + el.value + ' select option:first').val())
-                            }
-                        })
-                        $('#label-text').val('')
+                        resetAllBadgeValues()
                         $('#choose-label-view').hide()
                         $('#choose-badge-view').hide()
                         $('#choose-' + $('#badge-or-label').val() + '-view').show()
+                    })
+                    $('#badge-manual-or-auto').on('change', function() {
+                        resetAllBadgeValues()
+                        if ($('#badge-manual-or-auto').val() == 'manual') {
+                            $('#badge-auto').hide()
+                            $('#badge-manual').show()
+                        } else {
+                            $('#badge-manual').hide()
+                            $('#badge-auto').show()
+                        }
                     })
                     $('#audio-types').on('change', function() {
                         var newAudioTypeSelect = $('#audio-types').val()
@@ -2870,8 +3330,8 @@
                 $('#check-requests').hide()
                 $('#request-count').text('')
             }
-            function openAddBadges() {
-                badgeQueryString = false
+            function resetAllBadgeValues() {
+                // manual badge values
                 $('#badge-position').val($('#badge-position option:first').val())
                 $('#video-quality-badges').val($('#video-quality-badges option:first').val())
                 $('#3d-badges').val($('#3d-badges option:first').val())
@@ -2888,7 +3348,23 @@
                     }
                 })
                 $('#label-text').val('')
+
+                // auto badge values
+                $('#badge-auto-position').val($('#badge-auto-position option:first').val())
+                $('#badges-auto-video-quality').prop('checked', false)
+                $('#badges-auto-color-range').prop('checked', false)
+                $('#badges-auto-video-codec').prop('checked', false)
+                $('#badges-auto-audio-channels').prop('checked', false)
+                $('#badges-auto-video-source').prop('checked', false)
+                $('#country-flag-badge').val($('#country-flag-badge option:first').val())
+            }
+            function openAddBadges() {
+                badgeQueryString = false
+                resetAllBadgeValues()
                 $('#badge-or-label').val($('#badge-or-label option:first').val())
+                $('#badge-manual-or-auto').val($('#badge-manual-or-auto option:first').val())
+                $('#badge-auto').hide()
+                $('#badge-manual').show()
                 $('#choose-label-view').hide()
                 $('#choose-badge-view').show()
                 $('#choose-badge-settings').show().scrollTop(0)
@@ -2900,38 +3376,62 @@
                 if ($('#label-text').val()) {
                     queryString = '?label=' + encodeURIComponent($('#label-text').val())
                 } else {
-                    var badgePos = $('#badge-position').val()
-                    var badgeData = [
-                        $('#video-quality-badges').val(),
-                        $('#3d-badges').val(),
-                        $('#hdr-badges').val(),
-                        $('#remux-badges').val(),
-                        $('#codec-badges').val(),
-                        $('#container-badges').val(),
-                    ].filter(function(el) { return el !== 'none' })
+                    if ($('#badge-manual-or-auto').val() == 'manual') {
+                        var badgePos = $('#badge-position').val()
+                        var badgeData = [
+                            $('#video-quality-badges').val(),
+                            $('#3d-badges').val(),
+                            $('#hdr-badges').val(),
+                            $('#remux-badges').val(),
+                            $('#codec-badges').val(),
+                            $('#container-badges').val(),
+                        ].filter(function(el) { return el !== 'none' })
 
-                    var audioBadge = false
-                    Array.from(document.getElementById('audio-types').options).forEach(el => {
-                        if (el.value != 'none-audio') {
-                            if ($('#' + el.value + ' select').val() !== 'none') {
-                                audioBadge = $('#' + el.value + ' select').val()
+                        var audioBadge = false
+                        Array.from(document.getElementById('audio-types').options).forEach(el => {
+                            if (el.value != 'none-audio') {
+                                if ($('#' + el.value + ' select').val() !== 'none') {
+                                    audioBadge = $('#' + el.value + ' select').val()
+                                }
                             }
+                        })
+
+                        if (audioBadge)
+                            badgeData.push(audioBadge)
+
+                        if ($('#pr-types').val() != 'none')
+                            badgeData.push($('#pr-types').val())
+
+                        if (badgeData.length) {
+                            tempBadgeString = badgeData.join(',')
+                            queryString = '?badges=' + encodeURIComponent(tempBadgeString)
+                            if (badgePos && badgePos != 'left')
+                                queryString += '&badgePos=' + badgePos
                         }
-                    })
-
-                    if (audioBadge)
-                        badgeData.push(audioBadge)
-
-                    if ($('#pr-types').val() != 'none')
-                        badgeData.push($('#pr-types').val())
-
-                    if (badgeData.length) {
-                        tempBadgeString = badgeData.join(',')
-                        queryString = '?badges=' + encodeURIComponent(tempBadgeString)
-                        if (badgePos && badgePos != 'left')
-                            queryString += '&badgePos=' + badgePos
+                    } else {
+                        var badgePos = $('#badge-auto-position').val()
+                        var badgeData = []
+                        if ($('#badges-auto-video-quality').is(':checked'))
+                            badgeData.push('4k')
+                        if ($('#badges-auto-color-range').is(':checked'))
+                            badgeData.push('hdrcolor')
+                        if ($('#badges-auto-video-codec').is(':checked'))
+                            badgeData.push('h265')
+                        if ($('#badges-auto-audio-channels').is(':checked'))
+                            badgeData.push('audio51')
+                        if ($('#badges-auto-video-source').is(':checked'))
+                            badgeData.push('remuxgold')
+                        if ($('#country-flag-badge').val() != 'none') {
+                            // this would need to be converted to country code from lang
+                            // ignoring for preview mode for now
+                        }
+                        if (badgeData.length) {
+                            tempBadgeString = badgeData.join(',')
+                            queryString = '?badges=' + encodeURIComponent(tempBadgeString)
+                            if (badgePos && badgePos != 'left')
+                                queryString += '&badgePos=' + badgePos
+                        }
                     }
-
                 }
 
                 $('#preview-poster-img').attr('src', 'preview' + (queryString.length ? queryString + '&' : '?') + '&pass=' + encodeURIComponent(servPass || ''))
@@ -2951,47 +3451,72 @@
             }
 
             function saveAddBadges() {
+                let isAutoBadges = false
                 if ($('#label-text').val()) {
                     badgeQueryString = '?label=' + encodeURIComponent($('#label-text').val())
                 } else {
 
-                    var badgePos = $('#badge-position').val()
-                    var badgeData = [
-                        $('#video-quality-badges').val(),
-                        $('#3d-badges').val(),
-                        $('#hdr-badges').val(),
-                        $('#remux-badges').val(),
-                        $('#codec-badges').val(),
-                        $('#container-badges').val(),
-                    ].filter(function(el) { return el !== 'none' })
-                    var audioBadge = false
-                    Array.from(document.getElementById('audio-types').options).forEach(el => {
-                        if (el.value != 'none-audio') {
-                            if ($('#' + el.value + ' select').val() !== 'none') {
-                                audioBadge = $('#' + el.value + ' select').val()
+                    if ($('#badge-manual-or-auto').val() == 'manual') {
+                        var badgePos = $('#badge-position').val()
+                        var badgeData = [
+                            $('#video-quality-badges').val(),
+                            $('#3d-badges').val(),
+                            $('#hdr-badges').val(),
+                            $('#remux-badges').val(),
+                            $('#codec-badges').val(),
+                            $('#container-badges').val(),
+                        ].filter(function(el) { return el !== 'none' })
+                        var audioBadge = false
+                        Array.from(document.getElementById('audio-types').options).forEach(el => {
+                            if (el.value != 'none-audio') {
+                                if ($('#' + el.value + ' select').val() !== 'none') {
+                                    audioBadge = $('#' + el.value + ' select').val()
+                                }
                             }
+                        })
+
+                        if (audioBadge)
+                            badgeData.push(audioBadge)
+
+                        if ($('#pr-types').val() != 'none')
+                            badgeData.push($('#pr-types').val())
+
+                        if (badgeData.length) {
+                            badgeQueryString = '?badges=' + encodeURIComponent(badgeData.join(','))
+                            if (badgePos && badgePos != 'left')
+                                badgeQueryString += '&badgePos=' + badgePos
                         }
-                    })
+                    } else {
+                        isAutoBadges = true
+                        let tempBadgeString = ''
+                        var badgePos = $('#badge-auto-position').val()
+                        if ($('#badges-auto-video-quality').is(':checked'))
+                            tempBadgeString += '&videoQuality=1'
+                        if ($('#badges-auto-color-range').is(':checked'))
+                            tempBadgeString += '&colorRange=1'
+                        if ($('#badges-auto-video-codec').is(':checked'))
+                            tempBadgeString += '&videoCodec=1'
+                        if ($('#badges-auto-audio-channels').is(':checked'))
+                            tempBadgeString += '&audioChannels=1'
+                        if ($('#badges-auto-video-source').is(':checked'))
+                            tempBadgeString += '&videoSource=1'
+                        if ($('#country-flag-badge').val() != 'none')
+                            tempBadgeString += '&countryFlag=' + $('#country-flag-badge').val()
 
-                    if (audioBadge)
-                        badgeData.push(audioBadge)
-
-                    if ($('#pr-types').val() != 'none')
-                        badgeData.push($('#pr-types').val())
-
-                    if (badgeData.length) {
-                        badgeQueryString = '?badges=' + encodeURIComponent(badgeData.join(','))
-                        if (badgePos && badgePos != 'left')
-                            badgeQueryString += '&badgePos=' + badgePos
+                        if (tempBadgeString.length) {
+                            badgeQueryString = '?badges=' + encodeURIComponent(tempBadgeString.substr(1))
+                            if (badgePos && badgePos != 'left')
+                                badgeQueryString += '&badgePos=' + badgePos
+                        }
                     }
 
                 }
 
                 if ($("#edit-specific-folder").is(":visible") && specificFolder) {
-                    $.get('editFolderLabel' + (badgeQueryString ? badgeQueryString + '&' : '?') + 'folder=' + encodeURIComponent(specificFolder) + '&pass=' + encodeURIComponent(servPass || ''), function(data) {})
+                    $.get('editFolderLabel' + (badgeQueryString ? badgeQueryString + '&' : '?') + 'folder=' + encodeURIComponent(specificFolder) + (isAutoBadges ? '&autoBadges=1' : '') + '&pass=' + encodeURIComponent(servPass || ''), function(data) {})
                 } else if ($("#folder-poster-edit").is(":visible") && searchFolderName && searchFolderType) {
                     $('#folder-poster-edit-img').attr('src','');
-                    $.get('editItemLabel' + (badgeQueryString ? badgeQueryString + '&' : '?') + 'folder=' + encodeURIComponent(searchFolderName) + '&type=' + searchFolderType + '&pass=' + encodeURIComponent(servPass || ''), function(data) {
+                    $.get('editItemLabel' + (badgeQueryString ? badgeQueryString + '&' : '?') + 'folder=' + encodeURIComponent(searchFolderName) + '&type=' + searchFolderType + (isAutoBadges ? '&autoBadges=1' : '') + '&pass=' + encodeURIComponent(servPass || ''), function(data) {
                         setTimeout(() => {
                             $('#folder-poster-edit-img').attr('src', 'poster?type=' + searchFolderType + '&name=' + encodeURIComponent(searchFolderName) + '&break=' + Date.now() + '&pass=' + encodeURIComponent(servPass || ''))
                         })

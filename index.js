@@ -20,6 +20,7 @@ const stringHelper = require('./strings')
 const imdbMatching = require('./matching/imdb')
 const tmdbMatching = require('./matching/tmdb')
 const tvdbMatching = require('./matching/tvdb')
+const probeHelper = require('./probe')
 
 let queueDisabled = false
 
@@ -247,7 +248,7 @@ const nameQueue = async.queue((task, cb) => {
 
 	const folderLabel = settings.labels[parentMediaFolder]
 
-	const badgeString = settings.badges[parentMediaFolder]
+	let badgeString = settings.badges[parentMediaFolder]
 
 	const badgePos = settings.badgePositions[parentMediaFolder]
 
@@ -316,11 +317,21 @@ const nameQueue = async.queue((task, cb) => {
 		setTimeout(() => { cb() }, 1000) // 1s
 	}
 
-	function getPoster(imdbId) {
+	async function getPoster(imdbId) {
 		if (posterExists && !task.forced) {
 			endIt()
 			return
 		}
+		const autoBadgeData = settings.itemAutoBadges[imdbId] || settings.autoBadges[parentMediaFolder]
+
+		if (autoBadgeData) {
+			// overwrite badge string if auto badges are loaded
+			const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : path.join(task.folder, task.name), task.isFile, !!(task.type == 'series'), imdbId)
+			badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), path.join(task.folder, task.name))
+//			if (fileProbed.imdbId != imdbId)
+//				imdbId = fileProbed.imdbId
+		}
+
 		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos)
 
 		needle.get(posterUrl, (err, res) => {
@@ -378,6 +389,11 @@ const nameQueue = async.queue((task, cb) => {
 	}
 
 	function getImages(imdbId) {
+		if (settings.checkForLocalImdbId) {
+			const localFileImdbId = probeHelper.getImdbId(path.join(task.folder, task.name), task.isFile)
+			if (localFileImdbId && localFileImdbId != imdbId)
+				imdbId = localFileImdbId
+		}
 		const checkWithin2Years = !!(!task.avoidYearMatch && task.forced && posterExists && settings.overwriteLast2Years)
 		const currentYear = new Date().getFullYear()
 		function retrievePosters() {
@@ -895,6 +911,7 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 	const label = (req.query || {}).label || ''
 	const badges = (req.query || {}).badges || ''
 	const badgePos = (req.query || {}).badgePos || ''
+	const autoBadges = (req.query || {}).autoBadges || ''
 	if (!folder) {
 		internalError()
 		return
@@ -915,11 +932,30 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 		config.set('labels', settings.labels)
 	}
 	if (badges) {
-		settings.badges[folder] = badges
-		config.set('badges', settings.badges)
-	} else if (settings.badges[folder]) {
-		delete settings.badges[folder]
-		config.set('badges', settings.badges)
+		if (autoBadges) {
+			settings.autoBadges[folder] = badges
+			config.set('autoBadges', settings.autoBadges)
+			if (settings.badges[folder]) {
+				delete settings.badges[folder]
+				config.set('badges', settings.badges)
+			}
+		} else {
+			settings.badges[folder] = badges
+			config.set('badges', settings.badges)
+			if (settings.autoBadges[folder]) {
+				delete settings.autoBadges[folder]
+				config.set('autoBadges', settings.autoBadges)				
+			}
+		}
+	} else {
+		if (settings.badges[folder]) {
+			delete settings.badges[folder]
+			config.set('badges', settings.badges)
+		}
+		if (settings.autoBadges[folder]) {
+			delete settings.autoBadges[folder]
+			config.set('autoBadges', settings.autoBadges)
+		}
 	}
 	if (badgePos && badgePos != 'none') {
 		settings.badgePositions[folder] = badgePos
@@ -1521,6 +1557,7 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 	const mediaLabel = req.query.label
 	const mediaBadges = req.query.badges
 	const mediaBadgePos = req.query.badgePos
+	const mediaAutoBadges = (req.query || {}).autoBadges || ''
 	folderNameToImdb(mediaName, mediaType, async (imdbId) => {
 		if (imdbId) {
 			if (mediaLabel && mediaLabel != 'none') {
@@ -1531,15 +1568,34 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 				config.set('itemLabels', settings.itemLabels)
 			}
 			if (mediaBadges && mediaBadges != 'none') {
-				settings.itemBadges[imdbId] = mediaBadges
-				config.set('itemBadges', settings.itemBadges)
-			} else if (settings.itemBadges[imdbId]) {
-				delete settings.itemBadges[imdbId]
-				config.set('itemBadges', settings.itemBadges)
+				if (mediaAutoBadges) {
+					settings.itemAutoBadges[imdbId] = mediaBadges
+					config.set('itemAutoBadges', settings.itemAutoBadges)
+					if (settings.itemBadges[imdbId]) {
+						delete settings.itemBadges[imdbId]
+						config.set('itemBadges', settings.itemBadges)
+					}
+				} else {
+					settings.itemBadges[imdbId] = mediaBadges
+					config.set('itemBadges', settings.itemBadges)
+					if (settings.itemAutoBadges[imdbId]) {
+						delete settings.itemAutoBadges[imdbId]
+						config.set('itemAutoBadges', settings.itemAutoBadges)
+					}
+				}
+			} else {
+				if (settings.itemBadges[imdbId]) {
+					delete settings.itemBadges[imdbId]
+					config.set('itemBadges', settings.itemBadges)
+				}
+				if (settings.itemAutoBadges[imdbId]) {
+					delete settings.itemAutoBadges[imdbId]
+					config.set('itemAutoBadges', settings.itemAutoBadges)
+				}
 			}
 			if (mediaBadgePos && mediaBadgePos != 'none') {
 				settings.itemBadgePositions[imdbId] = mediaBadgePos
-				config.set('itemBadges', settings.itemBadgePositions)
+				config.set('itemBadgePositions', settings.itemBadgePositions)
 			}
 			res.setHeader('Content-Type', 'application/json')
 			const respObj = await changePosterForFolder(mediaName, imdbId, mediaType)

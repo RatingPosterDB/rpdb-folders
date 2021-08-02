@@ -22,7 +22,10 @@
     "is-docker": "2.1.1",
     "windows-network-drive": "3.0.1",
     "semver": "7.3.5",
-    "iso-639-1": "2.1.9"
+    "iso-639-1": "2.1.9",
+    "iso-639-3-to-1": "1.0.0",
+    "ffprobe": "1.1.2",
+    "ffprobe-static": "3.0.0"
   },
   "bin": "index.js",
   "devDependencies": {
