@@ -15,7 +15,7 @@ const extRequire = require('./externalRequire')
 let ffprobe = false
 let ffprobeStatic = false
 
-const isSubFile = (source, mustStartWith) => { try { return fileHelper.isSub(source) && source.startsWith(mustStartWith) } catch(e) { return false } }
+const isSubFile = (mustStartWith, source) => { try { return fileHelper.isSub(source) && path.basename(source).startsWith(mustStartWith) } catch(e) { return false } }
 const getSubs = (source, mustStartWith) => { try { return fs.readdirSync(source).map(name => path.join(source, name)).filter(isSubFile.bind(null, mustStartWith)) } catch(e) { return [] } }
 
 const getSubFileLangs = fileLoc => {
@@ -28,14 +28,16 @@ const getSubFileLangs = fileLoc => {
 	const subFiles = getSubs(dirname, nameNoExt) || []
 
 	return subFiles.map(el => {
-		const lang = fileHelper.removeExtension(el.replace(nameNoExt, ''))
+		const lang = fileHelper.removeExtension(path.basename(el).replace(nameNoExt, '')).substr(1)
 		const langLength = (lang || '').length
 		if (langLength == 3) {
-			return convert3To1(el)
+			return (convert3To1(lang) || '').toLowerCase()
+		} else if (langLength == 2) {
+			return lang.toLowerCase()
 		} else if (langLength > 3 || langLength < 2) {
 			return false
 		}
-	})
+	}).filter(el => !!el)
 }
 
 const getImdbId = (fileLoc, isDirectFile) => {
