@@ -522,7 +522,23 @@ let fullScanRunning = false
 
 function startFetchingPosters(theseFolders, type, forced, avoidYearMatch) {
 	let allFolders = []
-	theseFolders.forEach(mediaFolder => { allFolders = allFolders.concat(getDirectories(mediaFolder)) })
+	theseFolders.forEach(mediaFolder => {
+		const subFolders = getDirectories(mediaFolder)
+		if ((subFolders || []).length)
+			allFolders = allFolders.concat(subFolders)
+		else {
+			// check if this media folder includes video Files
+			const videoFiles = getDirectories(mediaFolder, true)
+			if ((videoFiles || []).length) {
+				videoFiles.forEach(el => {
+					if (!el) return;
+					const name = el.split(path.sep).pop()
+					const nameNoExt = fileHelper.removeExtension(name)
+					nameQueue.push({ name, folder: path.dirname(el), type, forced, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg', avoidYearMatch })
+				})
+			}
+		}
+	})
 	if (allFolders.length) {
 		fullScanRunning = true
 		allFolders.forEach((el) => { if (!el) return; const name = el.split(path.sep).pop(); nameQueue.push({ name, folder: el, type, forced, avoidYearMatch }) })
