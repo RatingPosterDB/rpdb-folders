@@ -201,7 +201,7 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 	}
 }
 
-function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos) {
+function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos, badgeSize) {
 	let posterType = settings[mediaType + 'PosterType']
 	let customPoster = ''
 	if (settings.customPosters[imdbId]) {
@@ -231,6 +231,11 @@ function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos)
 		else customPoster += '?'
 		customPoster += 'badgePos=' + (settings.itemBadgePositions[imdbId] || badgePos)
 	}
+	if (settings.itemBadgeSizes[imdbId] || badgeSize) {
+		if (customPoster.includes('?')) customPoster += '&'
+		else customPoster += '?'
+		customPoster += 'badgeSize=' + (settings.itemBadgeSizes[imdbId] || badgeSize)
+	}
 	return customPoster
 }
 
@@ -251,6 +256,8 @@ const nameQueue = async.queue((task, cb) => {
 	let badgeString = settings.badges[parentMediaFolder]
 
 	const badgePos = settings.badgePositions[parentMediaFolder]
+
+	const badgeSize = settings.badgeSizes[parentMediaFolder]
 
 	const posterName = task.posterName || 'poster.jpg'
 
@@ -332,7 +339,7 @@ const nameQueue = async.queue((task, cb) => {
 //				imdbId = fileProbed.imdbId
 		}
 
-		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos)
+		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos, badgeSize)
 
 		needle.get(posterUrl, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
@@ -648,7 +655,7 @@ function removeFromWatcher(folder) {
 	}
 }
 
-function addMediaFolder(type, folder, label, badges, badgePos) {
+function addMediaFolder(type, folder, label, badges, badgePos, badgeSize, autoBadges) {
 	const idx = settings.mediaFolders[type].indexOf(folder)
 	if (idx == -1) {
 		settings.mediaFolders[type].push(folder)
@@ -658,12 +665,29 @@ function addMediaFolder(type, folder, label, badges, badgePos) {
 			config.set('labels', settings.labels)
 		}
 		if (badges && badges != 'none') {
-			settings.badges[folder] = badges
-			config.set('badges', settings.badges)
+			if (autoBadges) {
+				settings.autoBadges[folder] = badges
+				config.set('autoBadges', settings.autoBadges)
+				if (settings.badges[folder]) {
+					delete settings.badges[folder]
+					config.set('badges', settings.badges)
+				}
+			} else {
+				settings.badges[folder] = badges
+				config.set('badges', settings.badges)
+				if (settings.autoBadges[folder]) {
+					delete settings.autoBadges[folder]
+					config.set('autoBadges', settings.autoBadges)
+				}
+			}
 		}
 		if (badgePos && badgePos != 'none' && badgePos != 'left') {
 			settings.badgePositions[folder] = badgePos
 			config.set('badgePositions', settings.badgePositions)
+		}
+		if (badgeSize && badgeSize != 'none' && badgeSize != 'normal') {
+			settings.badgeSizes[folder] = badgeSize
+			config.set('badgeSizes', settings.badgeSizes)
 		}
 		addToWatcher([folder])
 	}
@@ -682,9 +706,17 @@ function removeMediaFolder(type, folder) {
 			delete settings.badges[folder]
 			config.set('badges', settings.badges)
 		}
+		if (settings.autoBadges[folder]) {
+			delete settings.autoBadges[folder]
+			config.set('autoBadges', settings.autoBadges)
+		}
 		if (settings.badgePositions[folder]) {
 			delete settings.badgePositions[folder]
 			config.set('badgePositions', settings.badgePositions)
+		}
+		if (settings.badgeSizes[folder]) {
+			delete settings.badgeSizes[folder]
+			config.set('badgeSizes', settings.badgeSizes)
 		}
 		removeFromWatcher(folder)
 	}
@@ -911,6 +943,7 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 	const label = (req.query || {}).label || ''
 	const badges = (req.query || {}).badges || ''
 	const badgePos = (req.query || {}).badgePos || ''
+	const badgeSize = (req.query || {}).badgeSize || ''
 	const autoBadges = (req.query || {}).autoBadges || ''
 	if (!folder) {
 		internalError()
@@ -964,6 +997,13 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 		delete settings.badgePositions[folder]
 		config.set('badgePositions', settings.badgePositions)
 	}
+	if (badgeSize && badgeSize != 'normal') {
+		settings.badgeSizes[folder] = badgeSize
+		config.set('badgeSizes', settings.badgeSizes)
+	} else if (settings.badgeSizes[folder]) {
+		delete settings.badgeSizes[folder]
+		config.set('badgeSizes', settings.badgeSizes)
+	}
 	res.setHeader('Content-Type', 'application/json')
 	res.send({ success: true })
 }))
@@ -983,19 +1023,19 @@ app.get(baseUrl+'removeSeriesFolder', (req, res) => passwordValid(req, res, (req
 	removeFolderLogic(res, 'series', (req.query || {}).folder || '')
 }))
 
-function addFolderLogic(res, type, folder, label, badges, badgePos) {
+function addFolderLogic(res, type, folder, label, badges, badgePos, badgeSize, autoBadges) {
 	if (folder)
-		addMediaFolder(type, folder, label, badges, badgePos)
+		addMediaFolder(type, folder, label, badges, badgePos, badgeSize, autoBadges)
 	res.setHeader('Content-Type', 'application/json')
 	res.send({ success: true })
 }
 
 app.get(baseUrl+'addMovieFolder', (req, res) => passwordValid(req, res, (req, res) => {
-	addFolderLogic(res, 'movie', (req.query || {}).folder || '', (req.query || {}).label || '', (req.query || {}).badges || '', (req.query || {}).badgePos || '')
+	addFolderLogic(res, 'movie', (req.query || {}).folder || '', (req.query || {}).label || '', (req.query || {}).badges || '', (req.query || {}).badgePos || '', (req.query || {}).badgeSize || '', (req.query || {}).autoBadges || '')
 }))
 
 app.get(baseUrl+'addSeriesFolder', (req, res) => passwordValid(req, res, (req, res) => {
-	addFolderLogic(res, 'series', (req.query || {}).folder || '', (req.query || {}).label || '', (req.query || {}).badges || '', (req.query || {}).badgePos || '')
+	addFolderLogic(res, 'series', (req.query || {}).folder || '', (req.query || {}).label || '', (req.query || {}).badges || '', (req.query || {}).badgePos || '', (req.query || {}).badgeSize || '', (req.query || {}).autoBadges || '')
 }))
 
 app.get(baseUrl+'setApiKey', (req, res) => passwordValid(req, res, (req, res) => {
@@ -1557,6 +1597,7 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 	const mediaLabel = req.query.label
 	const mediaBadges = req.query.badges
 	const mediaBadgePos = req.query.badgePos
+	const mediaBadgeSize = req.query.badgeSize
 	const mediaAutoBadges = (req.query || {}).autoBadges || ''
 	folderNameToImdb(mediaName, mediaType, async (imdbId) => {
 		if (imdbId) {
@@ -1596,6 +1637,10 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 			if (mediaBadgePos && mediaBadgePos != 'none') {
 				settings.itemBadgePositions[imdbId] = mediaBadgePos
 				config.set('itemBadgePositions', settings.itemBadgePositions)
+			}
+			if (mediaBadgeSize && mediaBadgeSize != 'normal') {
+				settings.itemBadgeSizes[imdbId] = mediaBadgeSize
+				config.set('itemBadgeSizes', settings.itemBadgeSizes)
 			}
 			res.setHeader('Content-Type', 'application/json')
 			const respObj = await changePosterForFolder(mediaName, imdbId, mediaType)

@@ -504,6 +504,12 @@
                             <option value="right">Top Right</option>
                         </select>
                         <br/><br/><br/>
+                        <b>Badge Size</b><br/><br/>
+                        <select id="badge-auto-size">
+                            <option value="normal">Normal</option>
+                            <option value="small">Small</option>
+                        </select>
+                        <br/><br/><br/>
                         <b>Detect Badges For</b><br/><br/>
                         <label for="badges-auto-video-quality" class="pure-checkbox" style="display: inline-block">
                             <input type="checkbox" id="badges-auto-video-quality" value="videoQuality" />&nbsp;&nbsp;Video Quality (4k, 1080p, etc)</label>
@@ -957,6 +963,12 @@
                             <option value="left">Top Left</option>
                             <option value="center">Top Center</option>
                             <option value="right">Top Right</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Badge Size</b><br/><br/>
+                        <select id="badge-size">
+                            <option value="normal">Normal</option>
+                            <option value="small">Small</option>
                         </select>
                         <br/><br/><br/>
                         <b>Video Quality</b><br/><br/>
@@ -3333,6 +3345,7 @@
             function resetAllBadgeValues() {
                 // manual badge values
                 $('#badge-position').val($('#badge-position option:first').val())
+                $('#badge-size').val($('#badge-size option:first').val())
                 $('#video-quality-badges').val($('#video-quality-badges option:first').val())
                 $('#3d-badges').val($('#3d-badges option:first').val())
                 $('#hdr-badges').val($('#hdr-badges option:first').val())
@@ -3351,6 +3364,7 @@
 
                 // auto badge values
                 $('#badge-auto-position').val($('#badge-auto-position option:first').val())
+                $('#badge-auto-size').val($('#badge-auto-size option:first').val())
                 $('#badges-auto-video-quality').prop('checked', false)
                 $('#badges-auto-color-range').prop('checked', false)
                 $('#badges-auto-video-codec').prop('checked', false)
@@ -3378,6 +3392,7 @@
                 } else {
                     if ($('#badge-manual-or-auto').val() == 'manual') {
                         var badgePos = $('#badge-position').val()
+                        var badgeSize = $('#badge-size').val()
                         var badgeData = [
                             $('#video-quality-badges').val(),
                             $('#3d-badges').val(),
@@ -3407,9 +3422,12 @@
                             queryString = '?badges=' + encodeURIComponent(tempBadgeString)
                             if (badgePos && badgePos != 'left')
                                 queryString += '&badgePos=' + badgePos
+                            if (badgeSize && badgeSize != 'normal')
+                                queryString += '&badgeSize=' + badgeSize
                         }
                     } else {
                         var badgePos = $('#badge-auto-position').val()
+                        var badgeSize = $('#badge-auto-size').val()
                         var badgeData = []
                         if ($('#badges-auto-video-quality').is(':checked'))
                             badgeData.push('4k')
@@ -3430,6 +3448,8 @@
                             queryString = '?badges=' + encodeURIComponent(tempBadgeString)
                             if (badgePos && badgePos != 'left')
                                 queryString += '&badgePos=' + badgePos
+                            if (badgeSize && badgeSize != 'normal')
+                                queryString += '&badgeSize=' + badgeSize
                         }
                     }
                 }
@@ -3458,6 +3478,7 @@
 
                     if ($('#badge-manual-or-auto').val() == 'manual') {
                         var badgePos = $('#badge-position').val()
+                        var badgeSize = $('#badge-size').val()
                         var badgeData = [
                             $('#video-quality-badges').val(),
                             $('#3d-badges').val(),
@@ -3485,11 +3506,14 @@
                             badgeQueryString = '?badges=' + encodeURIComponent(badgeData.join(','))
                             if (badgePos && badgePos != 'left')
                                 badgeQueryString += '&badgePos=' + badgePos
+                            if (badgeSize && badgeSize != 'normal')
+                                badgeQueryString += '&badgeSize=' + badgeSize
                         }
                     } else {
                         isAutoBadges = true
                         let tempBadgeString = ''
                         var badgePos = $('#badge-auto-position').val()
+                        var badgeSize = $('#badge-auto-size').val()
                         if ($('#badges-auto-video-quality').is(':checked'))
                             tempBadgeString += '&videoQuality=1'
                         if ($('#badges-auto-color-range').is(':checked'))
@@ -3507,6 +3531,8 @@
                             badgeQueryString = '?badges=' + encodeURIComponent(tempBadgeString.substr(1))
                             if (badgePos && badgePos != 'left')
                                 badgeQueryString += '&badgePos=' + badgePos
+                            if (badgeSize && badgeSize != 'normal')
+                                badgeQueryString += '&badgeSize=' + badgeSize
                         }
                     }
 
