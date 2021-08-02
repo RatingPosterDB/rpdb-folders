@@ -1678,6 +1678,19 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 	})
 }))
 
+app.get(baseUrl+'backup.json', (req, res) => passwordValid(req, res, (req, res) => {
+	const dt = new Date()
+	res.setHeader('Content-Type', 'application/json')
+	res.setHeader("Content-Disposition", 'attachment; filename="backup-'+dt.toDateString()+'.json";')
+	res.sendFile(config.configPath)
+}))
+
+app.get(baseUrl+'getConfigPath', (req, res) => passwordValid(req, res, (req, res) => {
+	res.setHeader('Content-Type', 'application/json')
+	res.send({ path: config.configPath })
+}))
+
+
 let staticPath = path.join(path.dirname(process.execPath), 'static')
 
 if (!fs.existsSync(staticPath))

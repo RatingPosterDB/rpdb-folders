@@ -118,7 +118,8 @@ const config = {
     },
     has: key => {
         return map.hasOwnProperty(key)
-    }
+    },
+    configPath
 }
 
 module.exports = config
