@@ -333,10 +333,34 @@ const nameQueue = async.queue((task, cb) => {
 
 		if (autoBadgeData) {
 			// overwrite badge string if auto badges are loaded
-			const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : path.join(task.folder, task.name), task.isFile, !!(task.type == 'series'), imdbId)
-			badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), path.join(task.folder, task.name))
-//			if (fileProbed.imdbId != imdbId)
-//				imdbId = fileProbed.imdbId
+			let videoFile = false
+			if (!task.isFile && task.type == 'movie') {
+				if (fs.lstatSync(task.folder).isDirectory()) {
+					// get video filename
+					const folderVideos = getVideos(task.folder)
+					if ((folderVideos || []).length) {
+						folderVideos.some(el => {
+							if (!el) return
+							if (!path.basename(el).toLowerCase().includes('-trailer.')) {
+								videoFile = el
+								return true
+							}
+						})
+					}
+				} else {
+					// to not skip probing
+					videoFile = true
+				}
+			}
+			let skipProbing = false
+			if (!task.isFile && !videoFile)
+				skipProbing = true
+			if (!skipProbing) {
+				const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, task.isFile, !!(task.type == 'series'), imdbId)
+				badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile)
+	//			if (fileProbed.imdbId != imdbId)
+	//				imdbId = fileProbed.imdbId
+			}
 		}
 
 		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos, badgeSize)
@@ -517,6 +541,9 @@ nameQueue.drain(() => {
 
 const isDirectoryOrVideo = (withVideos, source) => { try { return fs.lstatSync(source).isDirectory() || (withVideos && fileHelper.isVideo(source)) } catch(e) { return false } }
 const getDirectories = (source, withVideos) => { try { return fs.readdirSync(source).map(name => path.join(source, name)).filter(isDirectoryOrVideo.bind(null, withVideos)) } catch(e) { console.error(e); return [] } }
+const isVideo = (source) => { try { return !fs.lstatSync(source).isDirectory() && fileHelper.isVideo(source) } catch(e) { return false } }
+const getVideos = (source) => { try { return fs.readdirSync(source).map(name => path.join(source, name)).filter(isVideo) } catch(e) { console.error(e); return [] } }
+
 
 let fullScanRunning = false
 
@@ -528,7 +555,7 @@ function startFetchingPosters(theseFolders, type, forced, avoidYearMatch) {
 			allFolders = allFolders.concat(subFolders)
 		else {
 			// check if this media folder includes video Files
-			const videoFiles = getDirectories(mediaFolder, true)
+			const videoFiles = getVideos(mediaFolder, true)
 			if ((videoFiles || []).length) {
 				videoFiles.forEach(el => {
 					if (!el) return;
