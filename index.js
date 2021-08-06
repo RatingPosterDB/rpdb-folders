@@ -295,17 +295,27 @@ const nameQueue = async.queue((task, cb) => {
 		backdropExists = fs.existsSync(path.join(targetFolder, backdropName))
 	}
 
-	if (posterExists && !settings.backdrops) {
-		if (!task.forced) {
-			setTimeout(() => { cb() }, 100)
-			return
-		}
+	let noSkip = false
+	if (posterExists && !task.forced) {
+		const folderAutoBadgeData = settings.autoBadges[parentMediaFolder]
+		// don't skip if auto badge turned on and no rpdb.json exists
+		if (folderAutoBadgeData && fs.lstatSync(task.folder).isDirectory() && !probeHelper.getDbFile(task.folder, task.isFile))
+			noSkip = true
 	}
 
-	if (settings.backdrops && posterExists && backdropExists) {
-		if (!task.forced) {
-			setTimeout(() => { cb() }, 100)
-			return
+	if (!noSkip) {
+		if (posterExists && !settings.backdrops) {
+			if (!task.forced) {
+				setTimeout(() => { cb() }, 100)
+				return
+			}
+		}
+
+		if (settings.backdrops && posterExists && backdropExists) {
+			if (!task.forced) {
+				setTimeout(() => { cb() }, 100)
+				return
+			}
 		}
 	}
 
@@ -325,11 +335,16 @@ const nameQueue = async.queue((task, cb) => {
 	}
 
 	async function getPoster(imdbId) {
-		if (posterExists && !task.forced) {
-			endIt()
-			return
-		}
 		const autoBadgeData = settings.itemAutoBadges[imdbId] || settings.autoBadges[parentMediaFolder]
+		if (posterExists && !task.forced) {
+			// don't skip if auto badge turned on and no rpdb.json exists
+			if (!noSkip && !(autoBadgeData && fs.lstatSync(task.folder).isDirectory() && !probeHelper.getDbFile(task.folder, task.isFile))) {
+				endIt()
+				return
+			} else {
+				console.log('Missing rpdb.json, continuing to probe video file.')
+			}
+		}
 
 		if (autoBadgeData) {
 			// overwrite badge string if auto badges are loaded
@@ -353,13 +368,13 @@ const nameQueue = async.queue((task, cb) => {
 				}
 			}
 			let skipProbing = false
-			if (!task.isFile && !videoFile)
+			if (task.type == 'movie' && !task.isFile && !videoFile)
 				skipProbing = true
 			if (!skipProbing) {
-				const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, task.isFile, !!(task.type == 'series'), imdbId)
+				const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, task.isFile, !!(task.type == 'series'), imdbId, settings.overwriteProbeData)
 				badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile)
-	//			if (fileProbed.imdbId != imdbId)
-	//				imdbId = fileProbed.imdbId
+				if (fileProbed.matchedImdbByMediaInfo && fileProbed.imdbId && fileProbed.imdbId != imdbId && !settings.overwriteMatches[task.type][task.name])
+					imdbId = fileProbed.imdbId
 			}
 		}
 
@@ -1388,6 +1403,7 @@ app.get(baseUrl+'preview', (req, res) => passwordValid(req, res, (req, res) => {
 	const mediaLabel = req.query.label
 	const mediaBadges = req.query.badges
 	const mediaBadgePos = req.query.badgePos
+	const mediaBadgeSize = req.query.badgeSize
 	let queryString = ''
 	if (mediaLabel) queryString = '?label=' + mediaLabel
 	if (mediaBadges) {
@@ -1399,6 +1415,11 @@ app.get(baseUrl+'preview', (req, res) => passwordValid(req, res, (req, res) => {
 		if (queryString) queryString += '&'
 		else queryString = '?'
 		queryString += 'badgePos=' + mediaBadgePos
+	}
+	if (mediaBadgeSize && mediaBadgeSize != 'normal') {
+		if (queryString) queryString += '&'
+		else queryString = '?'
+		queryString += 'badgeSize=' + mediaBadgeSize
 	}
 	const posterUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/poster-default/' + mediaImdb + '.jpg' + queryString
 	needle.get(posterUrl).pipe(res)
