@@ -62,6 +62,7 @@ let map = {
     posterLang: { movie: 'en', series: 'en' },
     baseUrl: '/',
     checkForLocalImdbId: false,
+    overwriteProbeData: false,
 }
 
 function loadUserConfig(err, obj) {
