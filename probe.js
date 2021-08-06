@@ -166,25 +166,23 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId) => {
 					if (!fileDb.quality) {
 						const height = stream.height || stream.coded_height
 						if (height) {
-							if (height < 240)
-								fileDb.quality = 'sd'
-							else if (height >= 240 && height < 360)
+							if (height <= 240)
 								fileDb.quality = '240p'
-							else if (height >= 360 && height < 480)
+							else if (height > 240 && height <= 360)
 								fileDb.quality = '360p'
-							else if (height >= 480 && height < 720)
+							else if (height > 360 && height <= 480)
 								fileDb.quality = '480p'
-							else if (height >= 720 && height < 1080)
+							else if (height > 480 && height <= 720)
 								fileDb.quality = '720p'
-							else if (height >= 1080 && height < 1440)
+							else if (height > 720 && height <= 1080)
 								fileDb.quality = '1080p'
-							else if (height >= 1440 && height < 2160)
+							else if (height > 1080 && height <= 1440)
 								fileDb.quality = '2k'
-							else if (height >= 2160 && height < 2880)
+							else if (height > 1440 && height <= 2160)
 								fileDb.quality = '4k'
-							else if (height >= 2880 && height < 4320)
+							else if (height > 2160 && height <= 2880)
 								fileDb.quality = '5k'
-							else if (height >= 4320)
+							else if (height > 2880 && height <= 4320)
 								fileDb.quality = '8k'
 						}
 					}
@@ -282,10 +280,18 @@ const getQueryString = (fileDb, required, fileLoc) => {
 		if (fileDb.audioChannels)
 			badges.push('audio' + fileDb.audioChannels.replace('.', ''))
 
+	let excess = fileDb.excess || []
+	excess = Array.isArray(excess) ? excess : [excess]
+
 	if (required.videoSource) {
 		let source = false
-		if ((fileDb.excess || []).some(el => el.toLowerCase().includes('remux')))
+
+		const hasRemux = excess.some(el => {
+			return (el || '').toLowerCase().includes('remux')
+		})
+		if (hasRemux) {
 			source = 'remuxgold'
+		}
 		if (!source && fileDb.source) {
 			if (['bluray', 'brrip','bdrip'].includes(fileDb.source.toLowerCase()))
 				source = 'bluray'
@@ -294,10 +300,10 @@ const getQueryString = (fileDb, required, fileLoc) => {
 			else if (fileDb.source.toLowerCase().includes('web'))
 				source = 'web'
 		}
-		if (!source && (fileDb.excess || []).length) {
-			if (fileDb.excess.some(el => el.toLowerCase().includes('dvd')))
+		if (!source && excess.length) {
+			if (excess.some(el => el.toLowerCase().includes('dvd')))
 				source = 'dvd'
-			else if (fileDb.excess.some(el => el.toLowerCase().includes('web')))
+			else if (excess.some(el => el.toLowerCase().includes('web')))
 				source = 'web'
 		}
 		if (source)
