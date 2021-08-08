@@ -1,4 +1,4 @@
-const videoTypes = ['.mkv', '.avi', '.mp4']
+const videoTypes = ['.mkv', '.avi', '.mp4', '.ts']
 const subTypes = ['.srt', '.smi', '.ssa', '.ass', '.vtt']
 
 module.exports = {
