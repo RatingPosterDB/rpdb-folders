@@ -251,9 +251,16 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 						videoRes.width = vidWidth
 					}
 				}
-				if (!fileDb.isHdr)
+				if (!fileDb.isHdr) {
 					if (stream['HDR_Format'])
 						fileDb.isHdr = true
+					else if (stream['BitDepth'] && stream['colour_primaries'] && stream['transfer_characteristics']) {
+						if (stream['BitDepth'] == '10' && stream['colour_primaries'] == 'BT.2020') {
+							if (stream['transfer_characteristics'] == 'PQ' || stream['transfer_characteristics'] == 'HLG')
+								fileDb.isHdr = true
+						}
+					}
+				}
 				if (!fileDb.isDolbyVision && (stream['HDR_Format'] || '').toLowerCase().includes('dolby vision'))
 					fileDb.isDolbyVision = true
 			} else if (stream['@type'] == 'Audio') {
