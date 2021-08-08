@@ -21,6 +21,7 @@ const imdbMatching = require('./matching/imdb')
 const tmdbMatching = require('./matching/tmdb')
 const tvdbMatching = require('./matching/tvdb')
 const probeHelper = require('./probe')
+const logging = require('./logging')
 
 let queueDisabled = false
 
@@ -145,14 +146,14 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 	if (settings.scanOrder == 'tmdb-imdb') {
 		tmdbMatching.folderNameFromTMDBtoImdb(obj, res => {
 			if ((res || '').startsWith('tt')) {
-				console.log('Matched ' + folderName + ' by TMDB Search')
+				logging.log('Matched ' + folderName + ' by TMDB Search')
 				settings.imdbCache[folderType][folderName] = res
 				cb(res)
 			} else {
 				imdbMatching.folderNameToImdb(obj, (res, inf) => {
 					if (res) {
 						saveYear(res, ((inf || {}).meta || {}).year)
-						console.log('Matched ' + folderName + ' by IMDB Search')
+						logging.log('Matched ' + folderName + ' by IMDB Search')
 						settings.imdbCache[folderType][folderName] = res
 						cb(res)
 					} else cb(false)
@@ -163,7 +164,7 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 		imdbMatching.folderNameToImdb(obj, (res, inf) => {
 			if (res) {
 				saveYear(res, ((inf || {}).meta || {}).year)
-				console.log('Matched ' + folderName + ' by IMDB Search')
+				logging.log('Matched ' + folderName + ' by IMDB Search')
 				settings.imdbCache[folderType][folderName] = res
 				cb(res)
 			} else {
@@ -173,7 +174,7 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 	} else if (settings.scanOrder == 'tmdb') {
 		tmdbMatching.folderNameFromTMDBtoImdb(obj, res => {
 			if ((res || '').startsWith('tt')) {
-				console.log('Matched ' + folderName + ' by TMDB Search')
+				logging.log('Matched ' + folderName + ' by TMDB Search')
 				settings.imdbCache[folderType][folderName] = res
 				cb(res)
 			} else {
@@ -185,13 +186,13 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 		imdbMatching.folderNameToImdb(obj, (res, inf) => {
 			if (res) {
 				saveYear(res, ((inf || {}).meta || {}).year)
-				console.log('Matched ' + folderName + ' by IMDB Search')
+				logging.log('Matched ' + folderName + ' by IMDB Search')
 				settings.imdbCache[folderType][folderName] = res
 				cb(res)
 			} else {
 				tmdbMatching.folderNameFromTMDBtoImdb(obj, res => {
 					if ((res || '').startsWith('tt')) {
-						console.log('Matched ' + folderName + ' by TMDB Search')
+						logging.log('Matched ' + folderName + ' by TMDB Search')
 						settings.imdbCache[folderType][folderName] = res
 						cb(res)
 					} else cb(false)
@@ -247,7 +248,7 @@ const nameQueue = async.queue((task, cb) => {
 		return
 	}
 
-	console.log('Items left in queue: ' + nameQueue.length())
+	logging.log('Items left in queue: ' + nameQueue.length())
 
 	const parentMediaFolder = task.isFile ? task.folder : path.resolve(task.folder, '..')
 
@@ -281,7 +282,7 @@ const nameQueue = async.queue((task, cb) => {
 	if (settings.noPostersToEmptyFolders) {
 		const folderHasContents = getDirectories(targetFolder, true)
 		if (!(folderHasContents || []).length) {
-			console.log(`Skipping empty folder: ${task.name}`)
+			logging.log(`Skipping empty folder: ${task.name}`)
 			cb()
 			return
 		}
@@ -342,7 +343,7 @@ const nameQueue = async.queue((task, cb) => {
 				endIt()
 				return
 			} else {
-				console.log('Missing rpdb.json, continuing to probe video file.')
+				logging.log('Missing rpdb.json, continuing to probe video file.')
 			}
 		}
 
@@ -385,16 +386,16 @@ const nameQueue = async.queue((task, cb) => {
 				fs.writeFile(path.join(targetFolder, posterName), res.raw, (err) => {
 					if (err) {
 						if (!task.retry) {
-							console.log(`Warning: Could not write poster to folder for ${task.name}, trying again in 4h`)
+							logging.log(`Warning: Could not write poster to folder for ${task.name}, trying again in 4h`)
 							setTimeout(() => {
 								task.retry = true
 								nameQueue.push(task)
 							}, 4 * 60 * 60 * 1000)
 						} else {
-							console.log(`Warning: Could not write poster to folder for ${task.name}, tried twice`)
+							logging.log(`Warning: Could not write poster to folder for ${task.name}, tried twice`)
 						}
 					} else
-						console.log(`Poster for ${task.name} downloaded`)
+						logging.log(`Poster for ${task.name} downloaded`)
 					endIt()
 				})
 			} else {
@@ -403,10 +404,10 @@ const nameQueue = async.queue((task, cb) => {
 					// - API request limit is reached
 					// - requests are done for an unsupported poster type
 					// - API key is invalid / disabled
-					console.log(res.body)
+					logging.log(res.body)
 					queueDisabled = true
 				} else {
-					console.log('No poster available for ' + task.name)
+					logging.log('No poster available for ' + task.name)
 				}
 				endIt()
 			}
@@ -423,9 +424,9 @@ const nameQueue = async.queue((task, cb) => {
 			if (!err && (res || {}).statusCode == 200) {
 				fs.writeFile(path.join(targetFolder, backdropName), res.raw, (err) => {
 					if (err) {
-						console.log(`Warning: Could not write backdrop to folder for ${task.name}`)
+						logging.log(`Warning: Could not write backdrop to folder for ${task.name}`)
 					} else
-						console.log(`Backdrop for ${task.name} downloaded`)
+						logging.log(`Backdrop for ${task.name} downloaded`)
 					endIt()
 				})
 			} else {
@@ -467,9 +468,9 @@ const nameQueue = async.queue((task, cb) => {
 		}
 		function failPosters() {
 			if (checkWithin2Years)
-				console.log('Not within last 2 years, skipping: ' + task.name)
+				logging.log('Not within last 2 years, skipping: ' + task.name)
 			else
-				console.log('Could not match ' + task.name)
+				logging.log('Could not match ' + task.name)
 			endIt()
 			if (settings.backdrops) // end again
 				endIt()
@@ -512,14 +513,14 @@ const nameQueue = async.queue((task, cb) => {
 		const imdbIdInFolderName = imdbMatching.idInFolder(task.name)
 
 		if (imdbIdInFolderName) {
-			console.log('Matched ' + task.name + ' by IMDB ID in folder name')
+			logging.log('Matched ' + task.name + ' by IMDB ID in folder name')
 			getImages(imdbIdInFolderName)
 		} else {
 			const tmdbIdInFolderName = tmdbMatching.idInFolder(task.name)
 			if (tmdbIdInFolderName) {
 				tmdbMatching.tmdbToImdb(tmdbIdInFolderName, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
 					if (imdbId) {
-						console.log('Matched ' + task.name + ' by TMDB ID in folder name')
+						logging.log('Matched ' + task.name + ' by TMDB ID in folder name')
 						getImages(imdbId)
 					} else {
 						matchBySearch()
@@ -531,7 +532,7 @@ const nameQueue = async.queue((task, cb) => {
 					// only series supports converting to imdb id
 					tvdbMatching.tvdbToImdb(tvdbIdInFolderName, imdbId => {
 						if (imdbId) {
-							console.log('Matched ' + task.name + ' by TVDB ID in folder name')
+							logging.log('Matched ' + task.name + ' by TVDB ID in folder name')
 							getImages(imdbId)
 						} else {
 							matchBySearch()
@@ -630,7 +631,7 @@ function startWatcher() {
 		const name = el.split(path.sep).pop()
 		if (name.toLowerCase() == 'new folder')
 			return
-		console.log(`Directory ${name} has been added to ${type}`)
+		logging.log(`Directory ${name} has been added to ${type}`)
 		nameQueue.push({ name, folder: el, type, forced: false }) 
 	})
 
@@ -654,7 +655,7 @@ function startWatcher() {
 		if (type !== 'movie') {
 			return
 		}
-		console.log(`File ${name} has been added to ${type}`)
+		logging.log(`File ${name} has been added to ${type}`)
 		const nameNoExt = fileHelper.removeExtension(name)
 		nameQueue.push({ name, folder: path.dirname(el), type, forced: false, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg' }) 
 	})
@@ -677,7 +678,7 @@ function fullUpdate() {
 	let anyOverwrite = false
 	for (const [type, folders] of Object.entries(settings.mediaFolders)) {
 		if (settings.lastFullUpdate[type] < Date.now() - settings.fullUpdate) {
-			console.log(`Initiating periodic update of all ${type} folders`)
+			logging.log(`Initiating periodic update of all ${type} folders`)
 			settings.lastFullUpdate[type] = Date.now()
 			const overwrite = shouldOverwrite(type)
 			if (overwrite) {
@@ -1227,7 +1228,7 @@ app.get(baseUrl+'runFullScan', (req, res) => passwordValid(req, res, (req, res) 
 		}
 		let anyOverwrite = false
 		for (const [type, folders] of Object.entries(settings.mediaFolders)) {
-			console.log(`Full scan forced to start for ${type} folders`)
+			logging.log(`Full scan forced to start for ${type} folders`)
 			settings.lastFullUpdate[type] = Date.now()
 			const overwrite = shouldOverwrite(type)
 			if (overwrite) {
@@ -1264,7 +1265,7 @@ app.get(baseUrl+'forceOverwriteScan', (req, res) => passwordValid(req, res, (req
 		}
 	}
 	for (const [type, folders] of Object.entries(settings.mediaFolders)) {
-		console.log(`Overwrite scan forced to start for ${type} folders`)
+		logging.log(`Overwrite scan forced to start for ${type} folders`)
 		settings.lastFullUpdate[type] = Date.now()
 		startFetchingPosters(folders, type, true)
 	}
@@ -1776,7 +1777,7 @@ setTimeout(async () => {
 			settings = config.getAll()
 
 			const httpServer = `http://127.0.0.1:${port}${baseUrl}`
-			console.log(`RPDB Folders running at: ${httpServer}`)
+			logging.log(`RPDB Folders running at: ${httpServer}`)
 			await startWatcher()
 			if (settings.apiKey) {
 				await validateApiKey()
@@ -1824,9 +1825,9 @@ setTimeout(async () => {
 		}, 1000)
 		remoteCommandsQueue.drain(() => {
 			if (remoteSuccess) {
-				console.log('Successfully sent remote commands')
+				logging.log('Successfully sent remote commands')
 			} else {
-				console.log('Failed sending remote commands')
+				logging.log('Failed sending remote commands')
 			}
 		})
 		remoteUrls.forEach(remoteUrl => {
