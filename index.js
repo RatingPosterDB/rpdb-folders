@@ -923,6 +923,12 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.cacheMatches = cacheMatches
 		config.set('cacheMatches', settings.cacheMatches)
 	}
+	const shouldOverwriteProbe = (req.query || {}).overwriteProbe || false
+	const overwriteProbe = shouldOverwriteProbe == 1 ? true : false
+	if (overwriteProbe !== settings.overwriteProbeData) {
+		settings.overwriteProbeData = overwriteProbe
+		config.set('overwriteProbeData', settings.overwriteProbeData)
+	}
 	const backdrops = (req.query || {}).backdrops || false
 	const valBackdrops = backdrops == 1 ? true : false
 	if (settings.backdrops != valBackdrops) {
@@ -987,6 +993,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		pollingInterval: settings.pollingInterval,
 		moviePosterLang: settings.posterLang.movie,
 		seriesPosterLang: settings.posterLang.series,
+		overwriteProbe: settings.overwriteProbeData,
 	})
 }))
 

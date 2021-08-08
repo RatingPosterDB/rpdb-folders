@@ -2228,6 +2228,9 @@
                 <br/><br/>
                 <label for="cache-matches" class="pure-checkbox" style="display: inline-block">
                     <input type="checkbox" id="cache-matches" class="optionsCheckbox" value="cachedmatch" checked="" /> Cache Previous Successful Matches</label>
+                <br/><br/>
+                <label for="overwrite-probe" class="pure-checkbox" style="display: inline-block">
+                    <input type="checkbox" id="overwrite-probe" class="optionsCheckbox" value="overwriteprobe" /> Overwrite Video Probe Data</label>
                 <br/><br/><br/><br/>
                 <button type="button" class="pure-button pure-button-primary" onclick="closeScanSettings()">Save &amp; Close</button>
                 <br/><br/><br/>
@@ -2388,6 +2391,10 @@
                 if ($("#cache-matches").is(':checked')) {
                   cacheMatches = 1;
                 }
+                var overwriteProbe = 0
+                if ($("#overwrite-probe").is(':checked')) {
+                  overwriteProbe = 1;
+                }
                 var backdrops = 0
                 if ($("#backdrops-option-one").is(':checked')) {
                   backdrops = 1;
@@ -2405,7 +2412,7 @@
                 var pollingInterval = $('input[name=scanIntervalRadios]:checked', '#scan-interval-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -2470,6 +2477,9 @@
                             }
                             if (!data.cacheMatches) {
                                 $("#cache-matches").prop('checked', false)
+                            }
+                            if (data.overwriteProbe) {
+                                $("#overwrite-probe").prop('checked', true)
                             }
                             if (data.backdrops) {
                                 $("#backdrops-option-one").prop('checked', true)
@@ -2628,6 +2638,9 @@
                         updateSettings();
                     });
                     $("#cache-matches").on('change', function() {
+                        updateSettings();
+                    });
+                    $("#overwrite-probe").on('change', function() {
                         updateSettings();
                     });
                     $("#backdrops-option-one").on('change', function() {
