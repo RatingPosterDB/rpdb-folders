@@ -63,6 +63,7 @@ let map = {
     baseUrl: '/',
     checkForLocalImdbId: false,
     overwriteProbeData: false,
+    unmatched: { movie: {}, series: {} },
 }
 
 function loadUserConfig(err, obj) {

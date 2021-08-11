@@ -2669,23 +2669,7 @@
                     });
                     setInterval(pollData, 2000)
                     $('#search-folder-input').keyup(function() {
-                        var search = $(this).val()
-                        if (!search) {
-                            $('.search-list').html('')
-                            return;
-                        }
-                        var rx = new RegExp(searchStrings.forbiddenChar+'([^'+searchStrings.forbiddenChar+']*'+search+'[^'+searchStrings.forbiddenChar+']*)'+searchStrings.forbiddenChar,'gi')
-                        var i = 0, searchResults = [];
-                        while (result = rx.exec(searchStrings.folders)) {
-                            searchResults.push(result[1])
-                            i += 1
-                            if (i >= 10)
-                                break;
-                        }
-                        $('.search-list').html(searchResults.map(function(el, ij) {
-                            return '<div class="folder-line add-search-line" onclick="openFolderPosterEdit('+ij+')">' + el + '</div>'
-                        }))
-
+                        searchFolders($(this).val())
                     })
                 }
                 // check if password is required:
@@ -3134,7 +3118,6 @@
                 $('#choose-folder-types').hide()
             }
             function openSearchFolderEdit() {
-                console.log('type: ' + searchFolderType)
                 openPosterEdit(searchFolderType)
                 setTimeout(function() { closeChooseFolderTypes() })
             }
@@ -3153,8 +3136,27 @@
                 $('.choose-imdb-error-message').hide()
                 $('#choose-folder-by-imdb').hide()
             }
+            function searchFolders(search) {
+                if (!search && (srcFolderName || '') != 'Unmatched') {
+                    $('.search-list').html('')
+                    return;
+                }
+                var rx = new RegExp(searchStrings.forbiddenChar+'([^'+searchStrings.forbiddenChar+']*'+search+'[^'+searchStrings.forbiddenChar+']*)'+searchStrings.forbiddenChar,'gi')
+                var i = 0, searchResults = [];
+                while (result = rx.exec(searchStrings.folders)) {
+                    searchResults.push(result[1])
+                    i += 1
+                    if (i >= 10)
+                        break;
+                }
+                $('.search-list').html(searchResults.map(function(el, ij) {
+                    return '<div class="folder-line add-search-line" onclick="openFolderPosterEdit('+ij+')">' + el + '</div>'
+                }))
+            }
+            let srcFolderName
             function openPosterEdit(type, searchFolderName) {
                 searchFolderType = type
+                srcFolderName = searchFolderName
                 $.get('searchStrings?type=' + type + (searchFolderName ? '&searchfolder=' + searchFolderName : '') + '&pass=' + encodeURIComponent(servPass || ''), function(data) {
                     if (((data || {}).folders || '').length) {
                         searchStrings = data
@@ -3164,13 +3166,18 @@
                         $('#search-folder').show().scrollTop(0)
                         $('.search-list').html('')
                         $('#choose-search-folder').empty()
-                        $('#choose-search-folder').append(new Option('All Folders', 'all-folders'))
+                        $('#choose-search-folder').append(new Option('Filter', 'all-folders'))
 
                         data.folderChoices.forEach(function(el) {
                             $('#choose-search-folder').append(new Option(el, el, false, !!(el == searchFolderName)))
                         })
                         setTimeout(() => {
                             $('#search-folder-input').select()
+                            // show entire list if unmatched is chosen
+                            if ((searchFolderName || '') == 'Unmatched') {
+                                // show entire list if unmatched is chosen
+                                searchFolders('')
+                            }
                         })
                     }
                 })

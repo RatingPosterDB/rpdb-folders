@@ -50,9 +50,20 @@ function saveYear(res, thisYear) {
 
 function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, avoidYearMatch) {
 
+	function respond(imdbId, noUnmatched) {
+		if (!noUnmatched) {
+			if (imdbId) {
+				if (settings.unmatched[folderType][folderName])
+					delete settings.unmatched[folderType][folderName]
+			} else
+				settings.unmatched[folderType][folderName] = true
+		}
+		cb(imdbId)
+	}
+
 	// is it already an IMDB ID?
 	if (folderName.startsWith('tt') && !isNaN(folderName.replace('tt',''))) {
-		cb(folderName)
+		respond(folderName)
 		return
 	}
 
@@ -65,7 +76,7 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 	if (!skipCache) {
 		const cached = getCached(folderName, folderType)
 		if (cached) {
-			cb(cached)
+			respond(cached)
 			return
 		}
 	}
@@ -134,11 +145,11 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 		const cached = getCached(folderName, folderType, true)
 		if (cached) {
 			if (within2Years(obj.year, currentYear)) {
-				cb(cached)
+				respond(cached)
 			} else if (!obj.year) {
-				cb(cached)
+				respond(cached)
 			} else {
-				cb(false)
+				respond(false, true)
 			}
 			return
 		}
@@ -148,15 +159,15 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 			if ((res || '').startsWith('tt')) {
 				logging.log('Matched ' + folderName + ' by TMDB Search')
 				settings.imdbCache[folderType][folderName] = res
-				cb(res)
+				respond(res)
 			} else {
 				imdbMatching.folderNameToImdb(obj, (res, inf) => {
 					if (res) {
 						saveYear(res, ((inf || {}).meta || {}).year)
 						logging.log('Matched ' + folderName + ' by IMDB Search')
 						settings.imdbCache[folderType][folderName] = res
-						cb(res)
-					} else cb(false)
+						respond(res)
+					} else respond(false)
 				})
 			}
 		})
@@ -166,9 +177,9 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 				saveYear(res, ((inf || {}).meta || {}).year)
 				logging.log('Matched ' + folderName + ' by IMDB Search')
 				settings.imdbCache[folderType][folderName] = res
-				cb(res)
+				respond(res)
 			} else {
-				cb(false)
+				respond(false)
 			}
 		})
 	} else if (settings.scanOrder == 'tmdb') {
@@ -176,9 +187,9 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 			if ((res || '').startsWith('tt')) {
 				logging.log('Matched ' + folderName + ' by TMDB Search')
 				settings.imdbCache[folderType][folderName] = res
-				cb(res)
+				respond(res)
 			} else {
-				cb(false)
+				respond(false)
 			}
 		})
 	} else {
@@ -188,14 +199,14 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 				saveYear(res, ((inf || {}).meta || {}).year)
 				logging.log('Matched ' + folderName + ' by IMDB Search')
 				settings.imdbCache[folderType][folderName] = res
-				cb(res)
+				respond(res)
 			} else {
 				tmdbMatching.folderNameFromTMDBtoImdb(obj, res => {
 					if ((res || '').startsWith('tt')) {
 						logging.log('Matched ' + folderName + ' by TMDB Search')
 						settings.imdbCache[folderType][folderName] = res
-						cb(res)
-					} else cb(false)
+						respond(res)
+					} else respond(false)
 				})
 			}
 		})
@@ -555,6 +566,7 @@ nameQueue.drain(() => {
 	fullScanRunning = false
 	queueDisabled = false
 	avoidOptimizedBackdropsScan = false
+	config.set('unmatched', settings.unmatched)
 })
 
 const isDirectoryOrVideo = (withVideos, source) => { try { return fs.lstatSync(source).isDirectory() || (withVideos && fileHelper.isVideo(source)) } catch(e) { return false } }
@@ -787,11 +799,6 @@ function removeMediaFolder(type, folder) {
 		}
 		removeFromWatcher(folder)
 	}
-}
-
-function addOverwriteMatch(type, folder, imdbId) {
-	settings.overwriteMatches[folder] = imdbId
-	config.set('overwriteMatches', settings.overwriteMatches)
 }
 
 function updateSetting(name, value) {
@@ -1177,6 +1184,10 @@ function changePosterForFolder(folder, imdbId, type) {
 					if (folderMatch) {
 						settings.overwriteMatches[type][folderMatch] = imdbId
 						config.set('overwriteMatches', settings.overwriteMatches)
+						if (settings.unmatched[type][folderMatch]) {
+							delete settings.unmatched[type][folderMatch]
+							config.set('unmatched', settings.unmatched)
+						}
 						resolve({ success: true })
 						return
 					}
@@ -1366,17 +1377,24 @@ app.get(baseUrl+'searchStrings', (req, res) => passwordValid(req, res, async (re
 
 	let foundSearchFolderName = false
 
-	if (req.query.searchfolder) {
-		settings.mediaFolders[mediaType].some(el => {
-			if (el.endsWith(path.sep + req.query.searchfolder)) {
-				foundSearchFolderName = el
-				return true
-			}
-		})
+	const reqFolder = req.query.searchfolder
+
+	if (reqFolder) {
+		if (reqFolder == 'Unmatched') {
+			foundSearchFolderName = reqFolder
+		} else {
+			settings.mediaFolders[mediaType].some(el => {
+				if (el.endsWith(path.sep + req.query.searchfolder)) {
+					foundSearchFolderName = el
+					return true
+				}
+			})
+		}
 	}
 
-	const searchStringsResp = await searchStrings(foundSearchFolderName ? [foundSearchFolderName] : settings.mediaFolders[mediaType], mediaType)
+	const searchStringsResp = await searchStrings(foundSearchFolderName ? [foundSearchFolderName] : settings.mediaFolders[mediaType], mediaType, settings.unmatched)
 	searchStringsResp.folderChoices = (settings.mediaFolders[mediaType] || []).map(el => el.split(path.sep).pop())
+	searchStringsResp.folderChoices.push('Unmatched')
 	res.setHeader('Content-Type', 'application/json')
 	res.send(searchStringsResp)	
 }))
