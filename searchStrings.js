@@ -5,12 +5,17 @@ const forbiddenChar = process.platform == 'linux' || isDocker() ? '/' : ':'
 
 const browser = require('./browser')
 
-module.exports = async (mediaFolders, mediaType, unmatchedFolders) => {
+module.exports = async (mediaFolders, mediaType, unmatchedFolders, missingPosters) => {
 	let folders = []
 	if ((mediaFolders || []).length == 1 && mediaFolders[0] == 'Unmatched') {
 		return {
 			forbiddenChar,
 			folders: forbiddenChar + Object.keys(unmatchedFolders[mediaType]).join(forbiddenChar + forbiddenChar) + forbiddenChar
+		}
+	} else if ((mediaFolders || []).length == 1 && mediaFolders[0] == 'Missing Posters') {
+		return {
+			forbiddenChar,
+			folders: forbiddenChar + Object.keys(missingPosters[mediaType]).join(forbiddenChar + forbiddenChar) + forbiddenChar
 		}
 	} else {
 		for (let i = 0; mediaFolders[i]; i++) {

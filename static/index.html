@@ -3137,7 +3137,10 @@
                 $('#choose-folder-by-imdb').hide()
             }
             function searchFolders(search) {
-                if (!search && (srcFolderName || '') != 'Unmatched') {
+                // show entire list if unmatched / missing posters is chosen
+                const specialFilter = ['Unmatched', 'Missing Posters'].includes(srcFolderName || '')
+                const noResults = searchStrings.forbiddenChar+searchStrings.forbiddenChar
+                if (searchStrings.folders == noResults || (!search && !specialFilter)) {
                     $('.search-list').html('')
                     return;
                 }
@@ -3173,9 +3176,8 @@
                         })
                         setTimeout(() => {
                             $('#search-folder-input').select()
-                            // show entire list if unmatched is chosen
-                            if ((searchFolderName || '') == 'Unmatched') {
-                                // show entire list if unmatched is chosen
+                            if ((searchFolderName || '') == 'Unmatched' || (searchFolderName || '') == 'Missing Posters') {
+                                // show entire list if unmatched / missing posters is chosen
                                 searchFolders('')
                             }
                         })

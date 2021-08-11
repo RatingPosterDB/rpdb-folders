@@ -407,8 +407,11 @@ const nameQueue = async.queue((task, cb) => {
 						} else {
 							logging.log(`Warning: Could not write poster to folder for ${task.name}, tried twice`)
 						}
-					} else
+					} else {
 						logging.log(`Poster for ${task.name} downloaded`)
+						if (settings.missingPosters[task.type][task.name])
+							delete settings.missingPosters[task.type][task.name]
+					}
 					endIt()
 				})
 			} else {
@@ -421,6 +424,7 @@ const nameQueue = async.queue((task, cb) => {
 					queueDisabled = true
 				} else {
 					logging.log('No poster available for ' + task.name)
+					settings.missingPosters[task.type][task.name] = true
 				}
 				endIt()
 			}
@@ -449,6 +453,9 @@ const nameQueue = async.queue((task, cb) => {
 	}
 
 	function getImages(imdbId) {
+		// need to remove unmatched here too, due to overwrite matches
+		if (settings.unmatched[task.type][task.name])
+			delete settings.unmatched[task.type][task.name]
 		if (settings.checkForLocalImdbId) {
 			const localFileImdbId = probeHelper.getImdbId(path.join(task.folder, task.name), task.isFile)
 			if (localFileImdbId && localFileImdbId != imdbId)
@@ -567,6 +574,7 @@ nameQueue.drain(() => {
 	queueDisabled = false
 	avoidOptimizedBackdropsScan = false
 	config.set('unmatched', settings.unmatched)
+	config.set('missingPosters', settings.missingPosters)
 })
 
 const isDirectoryOrVideo = (withVideos, source) => { try { return fs.lstatSync(source).isDirectory() || (withVideos && fileHelper.isVideo(source)) } catch(e) { return false } }
@@ -1172,6 +1180,10 @@ function changePosterForFolder(folder, imdbId, type) {
 						const fldrName = fldr.split(path.sep).pop()
 						if (fldrName.trim().toLowerCase() == simplifiedFolder) {
 							folderMatch = fldrName
+
+							settings.overwriteMatches[type][folderMatch] = imdbId
+							config.set('overwriteMatches', settings.overwriteMatches)
+
 							if (fileHelper.isVideo(fldrName)) {
 								const nameNoExt = fileHelper.removeExtension(fldrName)
 								nameQueue.unshift({ name: fldrName, folder: path.dirname(fldr), type, forced: true, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg', avoidYearMatch: true }) 
@@ -1182,12 +1194,6 @@ function changePosterForFolder(folder, imdbId, type) {
 						}
 					})
 					if (folderMatch) {
-						settings.overwriteMatches[type][folderMatch] = imdbId
-						config.set('overwriteMatches', settings.overwriteMatches)
-						if (settings.unmatched[type][folderMatch]) {
-							delete settings.unmatched[type][folderMatch]
-							config.set('unmatched', settings.unmatched)
-						}
 						resolve({ success: true })
 						return
 					}
@@ -1380,7 +1386,7 @@ app.get(baseUrl+'searchStrings', (req, res) => passwordValid(req, res, async (re
 	const reqFolder = req.query.searchfolder
 
 	if (reqFolder) {
-		if (reqFolder == 'Unmatched') {
+		if (reqFolder == 'Unmatched' || reqFolder == 'Missing Posters') {
 			foundSearchFolderName = reqFolder
 		} else {
 			settings.mediaFolders[mediaType].some(el => {
@@ -1392,9 +1398,10 @@ app.get(baseUrl+'searchStrings', (req, res) => passwordValid(req, res, async (re
 		}
 	}
 
-	const searchStringsResp = await searchStrings(foundSearchFolderName ? [foundSearchFolderName] : settings.mediaFolders[mediaType], mediaType, settings.unmatched)
+	const searchStringsResp = await searchStrings(foundSearchFolderName ? [foundSearchFolderName] : settings.mediaFolders[mediaType], mediaType, settings.unmatched, settings.missingPosters)
 	searchStringsResp.folderChoices = (settings.mediaFolders[mediaType] || []).map(el => el.split(path.sep).pop())
 	searchStringsResp.folderChoices.push('Unmatched')
+	searchStringsResp.folderChoices.push('Missing Posters')
 	res.setHeader('Content-Type', 'application/json')
 	res.send(searchStringsResp)	
 }))

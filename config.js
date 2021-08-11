@@ -64,6 +64,7 @@ let map = {
     checkForLocalImdbId: false,
     overwriteProbeData: false,
     unmatched: { movie: {}, series: {} },
+    missingPosters: { movie: {}, series: {} },
 }
 
 function loadUserConfig(err, obj) {
