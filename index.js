@@ -369,8 +369,10 @@ const nameQueue = async.queue((task, cb) => {
 				}
 			}
 			let skipProbing = false
-			if (task.type == 'movie' && !task.isFile && !videoFile)
+			if (task.type == 'movie' && !task.isFile && !videoFile) {
+				logging.log('Warning: Could not find any video file for the movie in order to probe')
 				skipProbing = true
+			}
 			if (!skipProbing) {
 				const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, task.isFile, !!(task.type == 'series'), imdbId, settings.overwriteProbeData)
 				badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile)

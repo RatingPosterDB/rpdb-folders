@@ -10,6 +10,8 @@ const convert3To1 = require('iso-639-3-to-1')
 
 const tnp = require('torrent-name-parser')
 
+const logging = require('./logging')
+
 let MediaInfoFactory = false
 let mediainfo = false
 
@@ -75,11 +77,14 @@ const analyze = file => {
 			try {
 				mediainfo = await MediaInfoFactory({ format: 'object', coverData: false })
 			} catch(e) {
+				logging.log('Warning: Unable to initiate mediainfo library in order to probe video')
 				return resolve(false)
 			}
 
-		if (!mediainfo)
+		if (!mediainfo) {
+			logging.log('Warning: Could not load mediainfo library in order to probe video')
 			return resolve(false)
+		}
 
 		let fileSize = false
 		let fileHandle = false
@@ -89,6 +94,7 @@ const analyze = file => {
 				const buffer = new Uint8Array(size)
 				fs.read(fileHandle, buffer, 0, size, offset, (err) => {
 					if (err) {
+						logging.log('Warning: There was an issue while reading the video file when attempting to probe')
 						console.error(err)
 						resolve(false)
 						end()
@@ -102,6 +108,7 @@ const analyze = file => {
 
 		fs.open(file, 'r', async (err, handle) => {
 			if (err) {
+				logging.log('Warning: Could not open video file in order to probe video')
 				console.error(err)
 				resolve(false)
 				end()
@@ -110,6 +117,7 @@ const analyze = file => {
 			fileHandle = handle
 			fs.fstat(fileHandle, async (err, stat) => {
 				if (err) {
+					logging.log('Warning: Could not retrieve video file stats in order to probe video')
 					console.error(err)
 					resolve(false)
 					end()
@@ -123,6 +131,7 @@ const analyze = file => {
 						mediainfo.close()
 						mediainfo = false
 					}
+					logging.log('Warning: Could not probe video file')
 					console.error(e)
 					resolve(false)
 				})
@@ -178,6 +187,7 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 				}
 			}
 			if (!foundSeriesVideo) {
+				logging.log('Warning: Could not find any video file for the series in order to probe')
 				resolve(false)
 				return
 			}
@@ -207,7 +217,7 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 
 		const info = await analyze(fileLoc)
 		if (!info) {
-			console.error(Error('Missing video probing response'))
+			console.error(Error('Warning: Missing video probing response'))
 			resolve(false)
 			return
 		}
@@ -315,7 +325,10 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 
 		try {
 			fs.writeFileSync(dbFile, JSON.stringify(fileDb, null, 4))
-		} catch(e) {}
+		} catch(e) {
+			logging.log('Warning: Could not write rpdb.json file to folder after probing the video file')
+			console.error(e)
+		}
 
 		resolve(fileDb)
 
