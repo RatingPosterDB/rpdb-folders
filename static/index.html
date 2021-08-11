@@ -3169,7 +3169,7 @@
                         $('#search-folder').show().scrollTop(0)
                         $('.search-list').html('')
                         $('#choose-search-folder').empty()
-                        $('#choose-search-folder').append(new Option('Filter', 'all-folders'))
+                        $('#choose-search-folder').append(new Option('No Filter', 'all-folders'))
 
                         data.folderChoices.forEach(function(el) {
                             $('#choose-search-folder').append(new Option(el, el, false, !!(el == searchFolderName)))
