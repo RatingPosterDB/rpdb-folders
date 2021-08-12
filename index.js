@@ -1014,6 +1014,54 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 	})
 }))
 
+app.get(baseUrl+'getBadgeSettings', (req, res) => passwordValid(req, res, (req, res) => {
+	function internalError() {
+		res.status(500)
+		res.send('Internal Server Error')
+	}
+	const mediaName = req.query.folder
+	const mediaType = req.query.type
+	if (!mediaName && !mediaType) {
+		res.setHeader('Content-Type', 'application/json')
+		res.send({ success: true })
+		return
+	}
+	if (mediaType) {
+		folderNameToImdb(mediaName, mediaType, imdbId => {
+			if (imdbId) {
+				const badgeSettings = { success: true }
+				if (settings.itemLabels[imdbId])
+					badgeSettings.label = settings.itemLabels[imdbId]
+				if (settings.itemAutoBadges[imdbId])
+					badgeSettings.autoBadges = settings.itemAutoBadges[imdbId]
+				if (settings.itemBadges[imdbId])
+					badgeSettings.badges = settings.itemBadges[imdbId]
+				if (settings.itemBadgePositions[imdbId])
+					badgeSettings.badgePos = settings.itemBadgePositions[imdbId]
+				if (settings.itemBadgeSizes[imdbId])
+					badgeSettings.badgeSize = settings.itemBadgeSizes[imdbId]
+				res.setHeader('Content-Type', 'application/json')
+				res.send(badgeSettings)
+			} else
+				internalError()
+		})
+	} else {
+		const badgeSettings = { success: true }
+		if (settings.labels[mediaName])
+			badgeSettings.label = settings.labels[mediaName]
+		if (settings.autoBadges[mediaName])
+			badgeSettings.autoBadges = settings.autoBadges[mediaName]
+		if (settings.badges[mediaName])
+			badgeSettings.badges = settings.badges[mediaName]
+		if (settings.badgePositions[mediaName])
+			badgeSettings.badgePos = settings.badgePositions[mediaName]
+		if (settings.badgeSizes[mediaName])
+			badgeSettings.badgeSize = settings.badgeSizes[mediaName]
+		res.setHeader('Content-Type', 'application/json')
+		res.send(badgeSettings)
+	}
+}))
+
 app.get(baseUrl+'browse', (req, res) => passwordValid(req, res, async (req, res) => {
 	const folder = (req.query || {}).folder || ''
 	res.setHeader('Content-Type', 'application/json')

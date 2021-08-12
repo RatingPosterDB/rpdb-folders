@@ -3437,14 +3437,101 @@
             }
             function openAddBadges() {
                 badgeQueryString = false
+                let getBadgesQuery = ''
+                if (!$("#add-media-folder").is(":visible")) {
+                    if ($("#edit-specific-folder").is(":visible") && specificFolder)
+                        getBadgesQuery = '?folder=' + encodeURIComponent(specificFolder)
+                    else if ($("#folder-poster-edit").is(":visible") && searchFolderName && searchFolderType)
+                        getBadgesQuery = '?folder=' + encodeURIComponent(searchFolderName) + '&type=' + searchFolderType
+                }
                 resetAllBadgeValues()
-                $('#badge-or-label').val($('#badge-or-label option:first').val())
-                $('#badge-manual-or-auto').val($('#badge-manual-or-auto option:first').val())
-                $('#badge-auto').hide()
-                $('#badge-manual').show()
-                $('#choose-label-view').hide()
-                $('#choose-badge-view').show()
-                $('#choose-badge-settings').show().scrollTop(0)
+                $.get('getBadgeSettings' + (getBadgesQuery ? getBadgesQuery + '&' : '?') + 'pass=' + encodeURIComponent(servPass || ''), function(data) {
+                    if (data.success) {
+                        if (data.label) {
+                            $('#badge-manual-or-auto').val($('#badge-manual-or-auto option:first').val())
+                            $('#badge-auto').hide()
+                            $('#badge-manual').show()
+                            $('#choose-badge-view').hide()
+                            $('#choose-label-view').show()
+                            $('#label-text').val(data.label)
+                        } else if (data.autoBadges) {
+                            $('#badge-manual-or-auto').val('auto')
+                            $('#badge-manual').hide()
+                            $('#badge-auto').show()
+
+                            if (data.badgePos)
+                                $('#badge-auto-position').val(data.badgePos)
+
+                            if (data.badgeSize)
+                                $('#badge-auto-size').val(data.badgeSize)
+
+                            const tmpObj = {}
+
+                            data.autoBadges.split('&').forEach(el => {
+                                tmpObj[el.split('=')[0]] = el.split('=')[1]
+                            })
+
+                            if (tmpObj.videoQuality)
+                                $('#badges-auto-video-quality').prop('checked', true)
+                            if (tmpObj.colorRange)
+                                $('#badges-auto-color-range').prop('checked', true)
+                            if (tmpObj.videoCodec)
+                                $('#badges-auto-video-codec').prop('checked', true)
+                            if (tmpObj.audioChannels)
+                                $('#badges-auto-audio-channels').prop('checked', true)
+                            if (tmpObj.videoSource)
+                                $('#badges-auto-video-source').prop('checked', true)
+                            if (tmpObj.countryFlag)
+                                $('#country-flag-badge').val(tmpObj.countryFlag)
+
+                            $('#choose-label-view').hide()
+                            $('#choose-badge-view').show()
+                        } else if (data.badges) {
+                            $('#choose-badge-view').show()
+                            $('#badge-manual-or-auto').val('manual')
+                            $('#badge-auto').hide()
+                            $('#badge-manual').show()
+
+                            if (data.badgePos)
+                                $('#badge-position').val(data.badgePos)
+
+                            if (data.badgeSize)
+                                $('#badge-size').val(data.badgeSize)
+
+                            const tmpArr = data.badges.split(',')
+
+                            tmpArr.forEach(badgeVal => {
+                                let foundVal = false
+                                $('#badge-manual select').each((ij, el) => {
+                                    if (!foundVal) {
+                                        const selectBox = $(el)
+                                        const hasValue = $('#' + selectBox.attr('id') + ' option[value="' + badgeVal + '"]')
+                                        if ((hasValue || []).length) {
+                                            foundVal = true
+                                            selectBox.val(badgeVal)
+                                            if (selectBox.attr('id').includes('-audio-')) {
+                                                const selectBoxParent = selectBox.parent()
+                                                const parentId = selectBoxParent.attr('id')
+                                                $('#audio-types').val(parentId)
+                                                selectBoxParent.show()
+                                            }
+                                        }
+                                    }
+                                })
+                            })
+
+                            $('#choose-label-view').hide()
+                            $('#choose-badge-view').show()
+                        } else {
+                            $('#badge-or-label').val($('#badge-or-label option:first').val())
+                            $('#badge-auto').hide()
+                            $('#badge-manual').show()
+                            $('#choose-label-view').hide()
+                            $('#choose-badge-view').show()
+                        }
+                        $('#choose-badge-settings').show().scrollTop(0)
+                    }
+                })
             }
 
             function openPreviewPoster() {
