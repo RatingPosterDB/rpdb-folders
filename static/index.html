@@ -110,6 +110,14 @@
                 -ms-user-select: none;      
                 user-select: none;
             }
+            .button-warning {
+                background: rgb(223, 117, 20);
+                color: white;
+                opacity:  0.8;
+            }
+            .button-warning:hover {
+                opacity:  1;
+            }
         </style>
     </head>
     <body>
@@ -1142,6 +1150,8 @@
                 <br/><br/><br/>
             </div>
             <div style="text-align: center">
+                <button type="button" class="button-warning pure-button" onclick="removeBadges()">Remove Settings</button>
+                <br/><br/><br/>
                 <button type="button" class="pure-button" onclick="openPreviewPoster()">Preview Poster</button>
                 &nbsp;&nbsp;&nbsp;
                 <button type="button" class="pure-button" onclick="cancelAddBadges()">Cancel</button>
@@ -3526,6 +3536,7 @@
                             $('#choose-badge-view').show()
                         } else {
                             $('#badge-or-label').val($('#badge-or-label option:first').val())
+                            $('#badge-manual-or-auto').val($('#badge-manual-or-auto option:first').val())
                             $('#badge-auto').hide()
                             $('#badge-manual').show()
                             $('#choose-label-view').hide()
@@ -3622,7 +3633,11 @@
                 $('#choose-badge-settings').hide()
             }
 
-            function saveAddBadges() {
+            function removeBadges() {
+                saveAddBadges(true)
+            }
+
+            function saveAddBadges(shouldRemoveAll) {
                 let isAutoBadges = false
                 if ($('#label-text').val()) {
                     badgeQueryString = '?label=' + encodeURIComponent($('#label-text').val())
@@ -3691,6 +3706,9 @@
                     }
 
                 }
+
+                if (shouldRemoveAll)
+                    badgeQueryString = false
 
                 if ($("#edit-specific-folder").is(":visible") && specificFolder) {
                     $.get('editFolderLabel' + (badgeQueryString ? badgeQueryString + '&' : '?') + 'folder=' + encodeURIComponent(specificFolder) + '&pass=' + encodeURIComponent(servPass || ''), function(data) {})

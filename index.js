@@ -1086,10 +1086,6 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 		internalError()
 		return
 	}
-	if (!label && !badges) {
-		internalError()
-		return
-	}
 	if (label == 'none' && badges == 'none') {
 		internalError()
 		return
