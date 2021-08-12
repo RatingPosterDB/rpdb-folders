@@ -3692,13 +3692,13 @@
                         if ($('#badges-auto-video-quality').is(':checked'))
                             badgeData.push('4k')
                         if ($('#badges-auto-color-range').is(':checked'))
-                            badgeData.push('hdrcolor')
+                            badgeData.push($('#badges-auto-hdr').val() || 'hdrcolor')
                         if ($('#badges-auto-video-codec').is(':checked'))
                             badgeData.push('h265')
                         if ($('#badges-auto-audio-channels').is(':checked'))
                             badgeData.push('audio51')
                         if ($('#badges-auto-video-source').is(':checked'))
-                            badgeData.push('remuxgold')
+                            badgeData.push($('#badges-auto-remux').val() || 'remuxgold')
                         if ($('#country-flag-badge').val() != 'none') {
                             // this would need to be converted to country code from lang
                             // ignoring for preview mode for now
