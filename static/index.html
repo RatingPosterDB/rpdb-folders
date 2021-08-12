@@ -560,6 +560,38 @@
                         <br/><br/>
                         <label for="badges-auto-video-source" class="pure-radio" style="display: inline-block">
                             <input type="checkbox" id="badges-auto-video-source" value="videoSource" />&nbsp;&nbsp;Video Source (Remux, Web, BluRay, etc)</label>
+                        <div id="badges-auto-color-range-choice" style="display: none">
+                            <br/><br/><br/>
+                            <b>Preferred HDR Badge</b><br/><br/>
+                            <br/>
+                            <div style="text-align: center">
+                                <select id="badges-auto-hdr">
+                                    <option value="hdrcolor">HDR (True Color) [colorful]</option>
+                                    <option value="hdr">HDR (True Color) [silver]</option>
+                                </select>
+                            </div>
+                            <br/><br/><br/>
+                            <b>Preferred DoVi Badge</b><br/><br/>
+                            <br/>
+                            <div style="text-align: center">
+                                <select id="badges-auto-dolbyvision">
+                                    <option value="dolbyvision">Dolby Vision</option>
+                                    <option value="dolbyvisioncolor">Dolby Vision [alt 1]</option>
+                                    <option value="dolbyvisioncoloralt">Dolby Vision [alt 2]</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="badges-auto-video-source-choice" style="display: none">
+                            <br/><br/><br/>
+                            <b>Preferred Remux Badge</b><br/><br/>
+                            <br/>
+                            <div style="text-align: center">
+                                <select id="badges-auto-remux">
+                                    <option value="remuxgold">REMUX (Lossless) [gold]</option>
+                                    <option value="remux">REMUX (Lossless) [silver]</option>
+                                </select>
+                            </div>
+                        </div>
                         <br/><br/><br/>
                         <b>Country Badge</b><br/><br/>
                         <i style="opacity: 0.7">Adds country flag if audio / subtitle exists for language</i>
@@ -2419,12 +2451,15 @@
                 if ($("#series-textless-option-one").is(':checked')) {
                   seriesTextless = 1;
                 }
+                var hdrBadge = $('#badges-auto-hdr').val()
+                var doviBadge = $('#badges-auto-dolbyvision').val()
+                var remuxBadge = $('#badges-auto-remux').val()
                 var scanOrder = $('input[name=scanOrderRadios]:checked', '#scan-order-opts-form').val();
                 var usePolling = $('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val() == 'polling' ? '1' : '0';
                 var pollingInterval = $('input[name=scanIntervalRadios]:checked', '#scan-interval-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -2568,6 +2603,11 @@
                                     }
                                 })
                             }
+                            if (Object.keys(data.defaultBadges || {}).length) {
+                                Object.keys(data.defaultBadges).forEach(el => {
+                                    $('#badges-auto-'+el).val(data.defaultBadges[el])
+                                })
+                            }
                             $('#history-msg').text('Added images to ' + data.historyCount + ' folders.')
                             $('#watched-folders').text('Watching ' + (data.movieFolders || []).length + ' movie folders and ' + (data.seriesFolders || []).length + ' series folders.')
                             if (data.apiKeyPrefix) {
@@ -2587,6 +2627,8 @@
                     })
                     $('#badge-manual-or-auto').on('change', function() {
                         resetAllBadgeValues()
+                        $('#badges-auto-color-range-choice').hide()
+                        $('#badges-auto-video-source-choice').hide()
                         if ($('#badge-manual-or-auto').val() == 'manual') {
                             $('#badge-auto').hide()
                             $('#badge-manual').show()
@@ -2594,6 +2636,18 @@
                             $('#badge-manual').hide()
                             $('#badge-auto').show()
                         }
+                    })
+                    $('#badges-auto-color-range').on('change', function() {
+                        if ($('#badges-auto-color-range').is(':checked'))
+                            $('#badges-auto-color-range-choice').show()
+                        else
+                            $('#badges-auto-color-range-choice').hide()
+                    })
+                    $('#badges-auto-video-source').on('change', function() {
+                        if ($('#badges-auto-video-source').is(':checked'))
+                            $('#badges-auto-video-source-choice').show()
+                        else
+                            $('#badges-auto-video-source-choice').hide()
                     })
                     $('#audio-types').on('change', function() {
                         var newAudioTypeSelect = $('#audio-types').val()
@@ -2668,6 +2722,15 @@
                         updateSettings();
                     });
                     $('#series-poster-lang').on('change', function() {
+                        updateSettings();
+                    });
+                    $('#badges-auto-hdr').on('change', function() {
+                        updateSettings();
+                    });
+                    $('#badges-auto-dolbyvision').on('change', function() {
+                        updateSettings();
+                    });
+                    $('#badges-auto-remux').on('change', function() {
                         updateSettings();
                     });
                     $("#change-api-key").click(function(e) {
@@ -3446,6 +3509,8 @@
                 $('#badges-auto-audio-channels').prop('checked', false)
                 $('#badges-auto-video-source').prop('checked', false)
                 $('#country-flag-badge').val($('#country-flag-badge option:first').val())
+                $('#badges-auto-color-range-choice').hide()
+                $('#badges-auto-video-source-choice').hide()
             }
             function openAddBadges() {
                 let isAddMediaFolder = false
@@ -3513,14 +3578,18 @@
 
                             if (tmpObj.videoQuality)
                                 $('#badges-auto-video-quality').prop('checked', true)
-                            if (tmpObj.colorRange)
+                            if (tmpObj.colorRange) {
                                 $('#badges-auto-color-range').prop('checked', true)
+                                $('#badges-auto-color-range-choice').show()
+                            }
                             if (tmpObj.videoCodec)
                                 $('#badges-auto-video-codec').prop('checked', true)
                             if (tmpObj.audioChannels)
                                 $('#badges-auto-audio-channels').prop('checked', true)
-                            if (tmpObj.videoSource)
+                            if (tmpObj.videoSource) {
                                 $('#badges-auto-video-source').prop('checked', true)
+                                $('#badges-auto-video-source-choice').show()
+                            }
                             if (tmpObj.countryFlag)
                                 $('#country-flag-badge').val(tmpObj.countryFlag)
 

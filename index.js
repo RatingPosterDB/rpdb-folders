@@ -386,7 +386,7 @@ const nameQueue = async.queue((task, cb) => {
 			}
 			if (!skipProbing) {
 				const fileProbed = await probeHelper.probe(task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, task.isFile, !!(task.type == 'series'), imdbId, settings.overwriteProbeData)
-				badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile)
+				badgeString = probeHelper.getQueryString(fileProbed, querystring.parse(autoBadgeData), task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : videoFile, settings.defaultBadges || {})
 				if (fileProbed.matchedImdbByMediaInfo && fileProbed.imdbId && fileProbed.imdbId != imdbId && !settings.overwriteMatches[task.type][task.name])
 					imdbId = fileProbed.imdbId
 			}
@@ -978,6 +978,17 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.pollingInterval = valPollingInterval
 		config.set('pollingInterval', settings.pollingInterval)
 	}
+	const defBadges = {
+		dolbyvision: (req.query || {}).doviBadge || 'dolbyvision',
+		hdr: (req.query || {}).hdrBadge || 'hdrcolor',
+		remux: (req.query || {}).remuxBadge || 'remuxgold',
+	}
+
+	if (JSON.stringify(defBadges) != JSON.stringify(settings.defaultBadges)) {
+		settings.defaultBadges = defBadges
+		config.set('defaultBadges', settings.defaultBadges)
+	}
+
 	const scanOrder = (req.query || {}).scanOrder || false
 	settings.scanOrder = scanOrder || settings.scanOrder
 	config.set('scanOrder', settings.scanOrder)
@@ -1011,6 +1022,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		moviePosterLang: settings.posterLang.movie,
 		seriesPosterLang: settings.posterLang.series,
 		overwriteProbe: settings.overwriteProbeData,
+		defaultBadges: settings.defaultBadges,
 	})
 }))
 

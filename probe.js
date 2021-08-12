@@ -378,7 +378,7 @@ function findResolution(width, height) {
     return quality
 }
 
-const getQueryString = (fileDb, required, fileLoc) => {
+const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 	if (!fileDb) return false
 	if (!required || !Object.keys(required).length) return false
 
@@ -392,9 +392,9 @@ const getQueryString = (fileDb, required, fileLoc) => {
 
 	if (required.colorRange) {
 		if (fileDb.isDolbyVision)
-			badges.push('dolbyvision')
+			badges.push(defBadges.dolbyvision || 'dolbyvision')
 		else if (fileDb.isHdr)
-			badges.push('hdrcolor')
+			badges.push(defBadges.hdr || 'hdrcolor')
 	}
 
 	if (required.videoCodec) {
@@ -431,7 +431,7 @@ const getQueryString = (fileDb, required, fileLoc) => {
 			return (el || '').toLowerCase().includes('remux')
 		})
 		if (hasRemux) {
-			source = 'remuxgold'
+			source = defBadges.remux || 'remuxgold'
 		}
 		if (!source && fileDb.source) {
 			if (['bluray', 'brrip','bdrip'].includes(fileDb.source.toLowerCase()))

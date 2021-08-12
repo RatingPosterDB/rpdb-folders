@@ -65,6 +65,11 @@ let map = {
     overwriteProbeData: false,
     unmatched: { movie: {}, series: {} },
     missingPosters: { movie: {}, series: {} },
+    defaultBadges: {
+        dolbyvision: 'dolbyvision',
+        hdr: 'hdrcolor',
+        remux: 'remuxgold',
+    }
 }
 
 function loadUserConfig(err, obj) {
