@@ -458,8 +458,14 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 	if ((required.countryFlag || '').includes('_')) {
 		const badgeLang = required.countryFlag.split('_')[0]
 		badgeCountry = required.countryFlag.split('_')[1].replace('-','_').toLowerCase()
-		required.audioLang = badgeLang
-		required.subLang = badgeLang
+		if (required.countryFlagWhere == 'audio') {
+			required.audioLang = badgeLang
+		} else if (required.countryFlagWhere == 'sub') {
+			required.subLang = badgeLang
+		} else {
+			required.audioLang = badgeLang
+			required.subLang = badgeLang
+		}
 	}
 
 	let foundLang = false

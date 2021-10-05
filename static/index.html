@@ -1021,6 +1021,20 @@
                                 </option>
                             </select>
                         </div>
+                        <div id="country-flag-where-holder" style="text-align: center; display: none">
+                            <br/><br/>
+                            <i style="opacity: 0.7">Choose when to show country flag</i>
+                            <br/><br/>
+                            <select id="country-flag-where">
+                                <option value="none">
+                                    Audio / Subtitle Found
+                                </option><option value="audio">
+                                    Audio Found
+                                </option><option value="sub">
+                                    Subtitle Found
+                                </option>
+                            </select>
+                        </div>
                     </form>
                 </div>
                 <div id="badge-manual">
@@ -2733,6 +2747,12 @@
                     $('#badges-auto-remux').on('change', function() {
                         updateSettings();
                     });
+                    $('#country-flag-badge').on('change', function() {
+                        if ($('#country-flag-badge').val() != 'none')
+                            $('#country-flag-where-holder').show()
+                        else
+                            $('#country-flag-where-holder').hide()
+                    })
                     $("#change-api-key").click(function(e) {
                         e.preventDefault()
                         $('#api-key').val('')
@@ -3509,6 +3529,8 @@
                 $('#badges-auto-audio-channels').prop('checked', false)
                 $('#badges-auto-video-source').prop('checked', false)
                 $('#country-flag-badge').val($('#country-flag-badge option:first').val())
+                $('#country-flag-where').val($('#country-flag-where option:first').val())
+                $('#country-flag-where-holder').hide()
                 $('#badges-auto-color-range-choice').hide()
                 $('#badges-auto-video-source-choice').hide()
             }
@@ -3590,8 +3612,13 @@
                                 $('#badges-auto-video-source').prop('checked', true)
                                 $('#badges-auto-video-source-choice').show()
                             }
-                            if (tmpObj.countryFlag)
+                            if (tmpObj.countryFlag) {
                                 $('#country-flag-badge').val(tmpObj.countryFlag)
+                                if (tmpObj.countryFlag != 'none') {
+                                    $('#country-flag-where-holder').show()
+                                    $('#country-flag-where').val(tmpObj.countryFlagWhere || 'none')
+                                }
+                            }
 
                             $('#choose-label-view').hide()
                             $('#choose-badge-view').show()
@@ -3790,6 +3817,8 @@
                             tempBadgeString += '&videoSource=1'
                         if ($('#country-flag-badge').val() != 'none')
                             tempBadgeString += '&countryFlag=' + $('#country-flag-badge').val()
+                        if ($('#country-flag-where').val() != 'none')
+                            tempBadgeString += '&countryFlagWhere=' + $('#country-flag-where').val()
 
                         if (tempBadgeString.length) {
                             badgeQueryString = '?badges=' + encodeURIComponent(tempBadgeString.substr(1))
