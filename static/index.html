@@ -2237,78 +2237,83 @@
                     Sonarr webhook: <input id="webhookSonarr" class="webhooks" type="text" disabled />
                 </div>
                 <br/><br/>
-                <b>Polling Interval</b><br/><br/>
-                <div>
-                    <i style="opacity: 0.7">Only used when the "Polling" scan type is selected.</i>
-                    <br/><br/>
-                    <i style="opacity: 0.7"><b>Important:</b> Changing this setting requires restarting the app.</i>
-                    <br/><br/>
-                    <form class="pure-form pure-form-aligned" id="scan-interval-opts-form">
-                        <label for="checkbox-radio-scan-interval-one" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-one" name="scanIntervalRadios" value="100" checked="" /> 100ms</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-two" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-two" name="scanIntervalRadios" value="500" /> 500ms</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-three" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-three" name="scanIntervalRadios" value="1000" /> 1s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-four" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-four" name="scanIntervalRadios" value="3000" /> 3s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-five" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-five" name="scanIntervalRadios" value="5000" /> 5s</label>
+                <div id="pollingExtra" style="display:none">
+                    <b>Polling Interval</b><br/><br/>
+                    <div>
+                        <i style="opacity: 0.7">Only used when the "Polling" scan type is selected.</i>
                         <br/><br/>
-                        <label for="checkbox-radio-scan-interval-six" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-six" name="scanIntervalRadios" value="7000" /> 7s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-seven" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-seven" name="scanIntervalRadios" value="10000" /> 10s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-eight" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-eight" name="scanIntervalRadios" value="15000" /> 15s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-scan-interval-nine" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-scan-interval-nine" name="scanIntervalRadios" value="20000" /> 20s</label>
-                    </form>
-                </div>
-                <br/><br/>
-                <b>Webhook Delay</b><br/><br/>
-                <div>
-                    <i style="opacity: 0.7">The delay between receiving the webhook event and scanning the new media.</i>
-                    <br/><br/>
-                    <i style="opacity: 0.7">Only used when the "Radarr / Sonarr Webhooks" scan type is selected.</i>
-                    <br/><br/>
-                    <form class="pure-form pure-form-aligned" id="webhook-delay-opts-form">
-                        <label for="checkbox-radio-webhook-delay-one" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-one" name="webhookDelayRadios" value="0" checked="" /> None</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-two" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-two" name="webhookDelayRadios" value="5000" /> 5s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-three" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-three" name="webhookDelayRadios" value="15000" /> 15s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-four" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-four" name="webhookDelayRadios" value="30000" /> 30s</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-five" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-five" name="webhookDelayRadios" value="60000" /> 1m</label>
+                        <i style="opacity: 0.7"><b>Important:</b> Changing this setting requires restarting the app.</i>
                         <br/><br/>
-                        <label for="checkbox-radio-webhook-delay-six" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-six" name="webhookDelayRadios" value="180000" /> 3m</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-seven" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-seven" name="webhookDelayRadios" value="300000" /> 5m</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-eight" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-eight" name="webhookDelayRadios" value="600000" /> 10m</label>
-                        &nbsp;&nbsp;
-                        <label for="checkbox-radio-webhook-delay-nine" class="pure-radio" style="display: inline-block">
-                            <input type="radio" id="checkbox-radio-webhook-delay-nine" name="webhookDelayRadios" value="900000" /> 15m</label>
-                    </form>
+                        <form class="pure-form pure-form-aligned" id="scan-interval-opts-form">
+                            <label for="checkbox-radio-scan-interval-one" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-one" name="scanIntervalRadios" value="100" checked="" /> 100ms</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-two" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-two" name="scanIntervalRadios" value="500" /> 500ms</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-three" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-three" name="scanIntervalRadios" value="1000" /> 1s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-four" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-four" name="scanIntervalRadios" value="3000" /> 3s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-five" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-five" name="scanIntervalRadios" value="5000" /> 5s</label>
+                            <br/><br/>
+                            <label for="checkbox-radio-scan-interval-six" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-six" name="scanIntervalRadios" value="7000" /> 7s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-seven" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-seven" name="scanIntervalRadios" value="10000" /> 10s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-eight" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-eight" name="scanIntervalRadios" value="15000" /> 15s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-scan-interval-nine" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-scan-interval-nine" name="scanIntervalRadios" value="20000" /> 20s</label>
+                        </form>
+                    </div>
+                    <br/><br/>
                 </div>
-                <br/><br/>
+                <div id="webhookExtra" style="display:none">
+                    <br/>
+                    <b>Webhook Delay</b><br/><br/>
+                    <div>
+                        <i style="opacity: 0.7">The delay between receiving the webhook event and scanning the new media.</i>
+                        <br/><br/>
+                        <i style="opacity: 0.7">Only used when the "Radarr / Sonarr Webhooks" scan type is selected.</i>
+                        <br/><br/>
+                        <form class="pure-form pure-form-aligned" id="webhook-delay-opts-form">
+                            <label for="checkbox-radio-webhook-delay-one" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-one" name="webhookDelayRadios" value="0" checked="" /> None</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-two" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-two" name="webhookDelayRadios" value="5000" /> 5s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-three" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-three" name="webhookDelayRadios" value="15000" /> 15s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-four" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-four" name="webhookDelayRadios" value="30000" /> 30s</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-five" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-five" name="webhookDelayRadios" value="60000" /> 1m</label>
+                            <br/><br/>
+                            <label for="checkbox-radio-webhook-delay-six" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-six" name="webhookDelayRadios" value="180000" /> 3m</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-seven" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-seven" name="webhookDelayRadios" value="300000" /> 5m</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-eight" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-eight" name="webhookDelayRadios" value="600000" /> 10m</label>
+                            &nbsp;&nbsp;
+                            <label for="checkbox-radio-webhook-delay-nine" class="pure-radio" style="display: inline-block">
+                                <input type="radio" id="checkbox-radio-webhook-delay-nine" name="webhookDelayRadios" value="900000" /> 15m</label>
+                        </form>
+                    </div>
+                    <br/><br/>
+                </div>
                 <b>Matching Order</b><br/><br/>
                 <div>
                     <i style="opacity: 0.7">Which internal matchers should be used and in which order.</i>
@@ -2664,6 +2669,10 @@
                                     if ($(el).val() == data.usePolling) {
                                         if (data.usePolling == 'webhook') {
                                             $('#webhookInfo').show()
+                                            $('#webhookExtra').show()
+                                        }
+                                        if (data.usePolling == 'polling') {
+                                            $('#pollingExtra').show()
                                         }
                                         $(el).prop('checked', true)
                                     } else {
@@ -2769,10 +2778,18 @@
                         updateSettings();
                     });
                     $('#scan-type-opts-form input').on('change', function() {
-                        if ($('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val() == 'webhook') {
+                        var scanTypeVal = $('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val()
+                        if (scanTypeVal == 'webhook') {
                             $('#webhookInfo').show()
+                            $('#webhookExtra').show()
                         } else {
                             $('#webhookInfo').hide()
+                            $('#webhookExtra').hide()
+                        }
+                        if (scanTypeVal == 'polling') {
+                            $('#pollingExtra').show()
+                        } else {
+                            $('#pollingExtra').hide()
                         }
                         updateSettings();
                     });
