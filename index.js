@@ -745,6 +745,7 @@ function fullUpdate() {
 let watchedFolders = []
 
 function addToWatcher(arr) {
+	if (settings.useWebhook) { return }
 	const newArr = []
 	arr.forEach(el => {
 		if (!watchedFolders.includes(el))
@@ -755,6 +756,7 @@ function addToWatcher(arr) {
 }
 
 function removeFromWatcher(folder) {
+	if (settings.useWebhook) { return }
 	const idx = watchedFolders.indexOf(folder)
 	if (idx !== -1) {
 		watchedFolders.splice(idx, 1)
@@ -841,18 +843,20 @@ function updateSetting(name, value) {
 }
 
 function init() {
-	let allFolders = []
-	for (const [type, folders] of Object.entries(settings.mediaFolders))
-		allFolders = allFolders.concat(folders)
-	if (allFolders.length)
-		addToWatcher(allFolders)
-	if (!settings.overwrite) {
-		// we consider adding the folders to watcher a full scan
-		// on init, only if overwrite is disabled, because it will
-		// actually act like a full scan by re-checking all folders
-		settings.lastFullUpdate['movie'] = Date.now()
-		settings.lastFullUpdate['series'] = Date.now()
-		config.set('lastFullUpdate', settings.lastFullUpdate)
+	if (!settings.useWebhook) {
+		let allFolders = []
+		for (const [type, folders] of Object.entries(settings.mediaFolders))
+			allFolders = allFolders.concat(folders)
+		if (allFolders.length)
+			addToWatcher(allFolders)
+		if (!settings.overwrite) {
+			// we consider adding the folders to watcher a full scan
+			// on init, only if overwrite is disabled, because it will
+			// actually act like a full scan by re-checking all folders
+			settings.lastFullUpdate['movie'] = Date.now()
+			settings.lastFullUpdate['series'] = Date.now()
+			config.set('lastFullUpdate', settings.lastFullUpdate)
+		}
 	}
 	fullUpdate()
 }
