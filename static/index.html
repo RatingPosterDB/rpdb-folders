@@ -118,6 +118,12 @@
             .button-warning:hover {
                 opacity:  1;
             }
+            .webhooks {
+                width: 230px;
+                text-align: center;
+                padding: 5px;
+                cursor: text;
+            }
         </style>
     </head>
     <body>
@@ -2219,7 +2225,17 @@
                     &nbsp;&nbsp;
                     <label for="checkbox-radio-scan-type-two" class="pure-radio" style="display: inline-block">
                         <input type="radio" id="checkbox-radio-scan-type-two" name="scanTypeRadios" value="polling" /> Polling</label>
+                    &nbsp;&nbsp;
+                    <label for="checkbox-radio-scan-type-three" class="pure-radio" style="display: inline-block">
+                        <input type="radio" id="checkbox-radio-scan-type-three" name="scanTypeRadios" value="webhook" /> Radarr / Sonarr Webhooks</label>
                 </form>
+                <div id="webhookInfo" style="display:none">
+                    <i style="opacity: 0.7">If you have a password set, you will need to also set it in the<br/>webhook settings with the username: "rpdb" (no quotes)</i>
+                    <br/><br/>
+                    Radarr webhook: <input id="webhookRadarr" class="webhooks" type="text" disabled />
+                    <br/><br/>
+                    Sonarr webhook: <input id="webhookSonarr" class="webhooks" type="text" disabled />
+                </div>
                 <br/><br/>
                 <b>Polling Interval</b><br/><br/>
                 <div>
@@ -2254,6 +2270,42 @@
                         &nbsp;&nbsp;
                         <label for="checkbox-radio-scan-interval-nine" class="pure-radio" style="display: inline-block">
                             <input type="radio" id="checkbox-radio-scan-interval-nine" name="scanIntervalRadios" value="20000" /> 20s</label>
+                    </form>
+                </div>
+                <br/><br/>
+                <b>Webhook Delay</b><br/><br/>
+                <div>
+                    <i style="opacity: 0.7">The delay between receiving the webhook event and scanning the new media.</i>
+                    <br/><br/>
+                    <i style="opacity: 0.7">Only used when the "Radarr / Sonarr Webhooks" scan type is selected.</i>
+                    <br/><br/>
+                    <form class="pure-form pure-form-aligned" id="webhook-delay-opts-form">
+                        <label for="checkbox-radio-webhook-delay-one" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-one" name="webhookDelayRadios" value="0" checked="" /> None</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-two" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-two" name="webhookDelayRadios" value="5000" /> 5s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-three" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-three" name="webhookDelayRadios" value="15000" /> 15s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-four" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-four" name="webhookDelayRadios" value="30000" /> 30s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-five" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-five" name="webhookDelayRadios" value="60000" /> 1m</label>
+                        <br/><br/>
+                        <label for="checkbox-radio-webhook-delay-six" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-six" name="webhookDelayRadios" value="180000" /> 3m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-seven" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-seven" name="webhookDelayRadios" value="300000" /> 5m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-eight" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-eight" name="webhookDelayRadios" value="600000" /> 10m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-webhook-delay-nine" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-webhook-delay-nine" name="webhookDelayRadios" value="900000" /> 15m</label>
                     </form>
                 </div>
                 <br/><br/>
@@ -2470,10 +2522,12 @@
                 var remuxBadge = $('#badges-auto-remux').val()
                 var scanOrder = $('input[name=scanOrderRadios]:checked', '#scan-order-opts-form').val();
                 var usePolling = $('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val() == 'polling' ? '1' : '0';
+                var useWebhook = $('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val() == 'webhook' ? '1' : '0';
                 var pollingInterval = $('input[name=scanIntervalRadios]:checked', '#scan-interval-opts-form').val();
+                var webhookDelay = $('input[name=webhookDelayRadios]:checked', '#webhook-delay-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -2520,6 +2574,12 @@
                     checkUpdate()
                     $.get('getSettings?pass=' + encodeURIComponent(servPass || ''), function(data) {
                         if ((data || {}).success) {
+                            if (data.webhookRadarr) {
+                                $('#webhookRadarr').val(data.webhookRadarr)
+                            }
+                            if (data.webhookSonarr) {
+                                $('#webhookSonarr').val(data.webhookSonarr)
+                            }
                             // load saved data
                             if (data.pkgVersion) {
                                 $("#rpdb-folders-version").text('RPDB Folders v' + data.pkgVersion)
@@ -2602,6 +2662,9 @@
                             if (data.usePolling) {
                                 $('input[name=scanTypeRadios]', '#scan-type-opts-form').each((ij,el)=> {
                                     if ($(el).val() == data.usePolling) {
+                                        if (data.usePolling == 'webhook') {
+                                            $('#webhookInfo').show()
+                                        }
                                         $(el).prop('checked', true)
                                     } else {
                                         $(el).prop('checked', false)
@@ -2611,6 +2674,15 @@
                             if (data.pollingInterval) {
                                 $('input[name=scanIntervalRadios]', '#scan-interval-opts-form').each((ij,el)=> {
                                     if ($(el).val() == data.pollingInterval + '') {
+                                        $(el).prop('checked', true)
+                                    } else {
+                                        $(el).prop('checked', false)
+                                    }
+                                })
+                            }
+                            if (data.webhookDelay) {
+                                $('input[name=webhookDelayRadios]', '#webhook-delay-opts-form').each((ij,el)=> {
+                                    if ($(el).val() == data.webhookDelay + '') {
                                         $(el).prop('checked', true)
                                     } else {
                                         $(el).prop('checked', false)
@@ -2697,9 +2769,17 @@
                         updateSettings();
                     });
                     $('#scan-type-opts-form input').on('change', function() {
+                        if ($('input[name=scanTypeRadios]:checked', '#scan-type-opts-form').val() == 'webhook') {
+                            $('#webhookInfo').show()
+                        } else {
+                            $('#webhookInfo').hide()
+                        }
                         updateSettings();
                     });
                     $('#scan-interval-opts-form input').on('change', function() {
+                        updateSettings();
+                    });
+                    $('#webhook-delay-opts-form input').on('change', function() {
                         updateSettings();
                     });
                     $('#overwrite-opts-form input').on('change', function() {

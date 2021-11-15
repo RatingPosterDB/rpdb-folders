@@ -69,7 +69,9 @@ let map = {
         dolbyvision: 'dolbyvision',
         hdr: 'hdrcolor',
         remux: 'remuxgold',
-    }
+    },
+    useWebhook: false,
+    webhookDelay: 0,
 }
 
 function loadUserConfig(err, obj) {

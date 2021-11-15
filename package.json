@@ -24,7 +24,8 @@
     "semver": "7.3.5",
     "iso-639-1": "2.1.9",
     "iso-639-3-to-1": "1.0.0",
-    "mediainfo.js": "0.1.5"
+    "mediainfo.js": "0.1.5",
+    "body-parser": "1.19.0"
   },
   "bin": "index.js",
   "devDependencies": {

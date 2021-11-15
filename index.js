@@ -12,6 +12,7 @@ const open = require('open')
 const getPort = require('get-port')
 const nameToImdb = require('name-to-imdb')
 const querystring = require('querystring')
+const bp = require('body-parser')
 const config = require('./config')
 const browser = require('./browser')
 const searchStrings = require('./searchStrings')
@@ -526,6 +527,27 @@ const nameQueue = async.queue((task, cb) => {
 
 	if (settings.overwriteMatches[task.type][task.name]) {
 		getImages(settings.overwriteMatches[task.type][task.name])
+	} else if (task.imdbId) {
+		settings.overwriteMatches[task.type][task.name] = task.imdbId
+		getImages(task.imdbId)
+	} else if (task.tmdbId) {
+		tmdbMatching.tmdbToImdb(task.tmdbId, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
+			if (imdbId) {
+				settings.overwriteMatches[task.type][task.name] = imdbId
+				getImages(imdbId)
+			} else {
+				matchBySearch()
+			}
+		})
+	} else if (task.tvdbId) {
+		tvdbMatching.tvdbToImdb(task.tvdbId, imdbId => {
+			if (imdbId) {
+				settings.overwriteMatches[task.type][task.name] = imdbId
+				getImages(imdbId)
+			} else {
+				matchBySearch()
+			}
+		})
 	} else {
 
 		// check to see if folder name already contains an id
@@ -614,73 +636,77 @@ let watcher = {}
 
 function startWatcher() {
 
-	watcher = chokidar.watch('dir', {
-		ignored: /(^|[\/\\])\../, // ignore dotfiles
-		persistent: true,
-		depth: settings.watchFolderDepth || 0,
-		usePolling: settings.usePolling || false,
-		interval: settings.pollingInterval || 100,
-		ignoreInitial: settings.ignoreInitialScan || false,
-	})
+	if (!settings.useWebhook) {
 
-	watcher.on('addDir', el => {
-		let type
-		let parentFolder
-		for (const [folderType, folders] of Object.entries(settings.mediaFolders)) {
-			if (folders.includes(el))
-				return
-			if (!type)
-				folders.some(mediaFolder => {
-					if (el.startsWith(mediaFolder + path.sep)) {
-						type = folderType
-						parentFolder = mediaFolder
-						return true
-					}
-				})
-		}
-		if (settings.watchFolderDepth) {
-			if (type == 'series') {
-				// only allow increasing folder depth for movies
-				return
+		watcher = chokidar.watch('dir', {
+			ignored: /(^|[\/\\])\../, // ignore dotfiles
+			persistent: true,
+			depth: settings.watchFolderDepth || 0,
+			usePolling: settings.usePolling || false,
+			interval: settings.pollingInterval || 100,
+			ignoreInitial: settings.ignoreInitialScan || false,
+		})
+
+		watcher.on('addDir', el => {
+			let type
+			let parentFolder
+			for (const [folderType, folders] of Object.entries(settings.mediaFolders)) {
+				if (folders.includes(el))
+					return
+				if (!type)
+					folders.some(mediaFolder => {
+						if (el.startsWith(mediaFolder + path.sep)) {
+							type = folderType
+							parentFolder = mediaFolder
+							return true
+						}
+					})
+			}
+			if (settings.watchFolderDepth) {
+				if (type == 'series') {
+					// only allow increasing folder depth for movies
+					return
+				}
+				const folderPart = el.replace(parentFolder + path.sep, '')
+				if (folderPart.includes(path.sep)) {
+					// if folder depth has been increased, only process the primary folder
+					el = path.join(parentFolder, folderPart.split(path.sep)[0])
+				}
 			}
 			const folderPart = el.replace(parentFolder + path.sep, '')
-			if (folderPart.includes(path.sep)) {
-				// if folder depth has been increased, only process the primary folder
-				el = path.join(parentFolder, folderPart.split(path.sep)[0])
-			}
-		}
-		const folderPart = el.replace(parentFolder + path.sep, '')
-		const name = el.split(path.sep).pop()
-		if (name.toLowerCase() == 'new folder')
-			return
-		logging.log(`Directory ${name} has been added to ${type}`)
-		nameQueue.push({ name, folder: el, type, forced: false }) 
-	})
-
-	watcher.on('add', el => {
-		const name = el.split(path.sep).pop()
-		if (!fileHelper.isVideo(name)) {
-			return
-		}
-		let type
-		for (const [folderType, folders] of Object.entries(settings.mediaFolders)) {
-			if (folders.includes(el))
+			const name = el.split(path.sep).pop()
+			if (name.toLowerCase() == 'new folder')
 				return
-			if (!type)
-				folders.some(mediaFolder => {
-					if (el.startsWith(mediaFolder)) {
-						type = folderType
-						return true
-					}
-				})
-		}
-		if (type !== 'movie') {
-			return
-		}
-		logging.log(`File ${name} has been added to ${type}`)
-		const nameNoExt = fileHelper.removeExtension(name)
-		nameQueue.push({ name, folder: path.dirname(el), type, forced: false, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg' }) 
-	})
+			logging.log(`Directory ${name} has been added to ${type}`)
+			nameQueue.push({ name, folder: el, type, forced: false }) 
+		})
+
+		watcher.on('add', el => {
+			const name = el.split(path.sep).pop()
+			if (!fileHelper.isVideo(name)) {
+				return
+			}
+			let type
+			for (const [folderType, folders] of Object.entries(settings.mediaFolders)) {
+				if (folders.includes(el))
+					return
+				if (!type)
+					folders.some(mediaFolder => {
+						if (el.startsWith(mediaFolder)) {
+							type = folderType
+							return true
+						}
+					})
+			}
+			if (type !== 'movie') {
+				return
+			}
+			logging.log(`File ${name} has been added to ${type}`)
+			const nameNoExt = fileHelper.removeExtension(name)
+			nameQueue.push({ name, folder: path.dirname(el), type, forced: false, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg' }) 
+		})
+
+	}
 
 	return Promise.resolve()
 
@@ -865,6 +891,9 @@ if (!baseUrl.startsWith('/'))
 if (!baseUrl.endsWith('/'))
 	baseUrl += '/'
 
+app.use(bp.json())
+app.use(bp.urlencoded({ extended: true }))
+
 app.get(baseUrl+'checkPass', (req, res) => {
 	res.setHeader('Content-Type', 'application/json')
 	res.send({ success: !!(settings.pass == (req.query || {}).pass) })
@@ -972,6 +1001,18 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.usePolling = valUsePolling
 		config.set('usePolling', settings.usePolling)
 	}
+	const useWebhook = (req.query || {}).useWebhook || false
+	const valUseWebhook = useWebhook == 1 ? true : false
+	if (settings.useWebhook != valUseWebhook) {
+		settings.useWebhook = valUseWebhook
+		config.set('useWebhook', settings.useWebhook)
+	}
+	const webhookDelay = (req.query || {}).webhookDelay || '0'
+	const valWebhookDelay = parseInt(webhookDelay)
+	if (settings.webhookDelay != valWebhookDelay) {
+		settings.webhookDelay = valWebhookDelay
+		config.set('webhookDelay', settings.webhookDelay)
+	}	
 	const pollingInterval = (req.query || {}).pollingInterval || '100'
 	const valPollingInterval = parseInt(pollingInterval)
 	if (settings.pollingInterval != valPollingInterval) {
@@ -1017,12 +1058,15 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		seriesTextless: settings.seriesTextless,
 		moviePosterType: settings.moviePosterType,
 		seriesPosterType: settings.seriesPosterType,
-		usePolling: settings.usePolling ? 'polling' : 'fsevents',
+		usePolling: settings.useWebhook ? 'webhook' : settings.usePolling ? 'polling' : 'fsevents',
 		pollingInterval: settings.pollingInterval,
 		moviePosterLang: settings.posterLang.movie,
 		seriesPosterLang: settings.posterLang.series,
 		overwriteProbe: settings.overwriteProbeData,
 		defaultBadges: settings.defaultBadges,
+		webhookDelay: settings.webhookDelay,
+		webhookSonarr: 'http://localhost:'+port+baseUrl+'sonarr',
+		webhookRadarr: 'http://localhost:'+port+baseUrl+'radarr',
 	})
 }))
 
@@ -1816,6 +1860,98 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 			internalError()
 	})
 }))
+
+app.post(baseUrl+'radarr', (req, res) => {
+	if (settings.pass) {
+		let passedCheck = false
+		if (req.headers.authorization) {
+			const base64Credentials = req.headers.authorization.split(' ')[1]
+			const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+			const [username, password] = credentials.split(':')
+			if (username && password && username.toLowerCase() === 'rpdb' && password === settings.pass) {
+				passedCheck = true
+			}
+		}
+		if (!passedCheck) {
+			logging.log('Radarr Webhook Error: Password incorrect')
+			res.status(500)
+			res.send('Password Incorrect')
+			return
+		}
+	}
+	if ((req.body || {}).eventType == 'Download' && !req.body.isUpgrade && (req.body.movie || {}).folderPath) {
+		const folderPath = req.body.movie.folderPath
+		logging.log('Radarr Webhook Log: Received download event for: ' + folderPath)
+		if (!fs.existsSync(folderPath)) {
+			logging.log('Radarr Webhook Error: Path "' + folderPath + '" is not accessible')
+			res.status(500)
+			res.send('Path inaccessible')
+			return
+		}
+		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
+		const fldrName = folderPath.split(path.sep).pop()
+		reqObj.name = fldrName
+		if (req.body.movie.imdbId)
+			reqObj.imdbId = req.body.movie.imdbId
+		if (req.body.movie.tmdbId)
+			reqObj.tmdbId = req.body.movie.tmdbId
+		setTimeout(() => {
+			nameQueue.unshift(reqObj)
+		}, settings.webhookDelay || 0)
+		logging.log(`${req.body.movie.title} has been added to movie`)
+		res.send('Success')
+	} else {
+		logging.log('Radarr Webhook Log: Event not useful (not a download event or upgrading video)')
+		res.send('Event not useful')
+	}
+})
+
+app.post(baseUrl+'sonarr', (req, res) => {
+	if (settings.pass) {
+		let passedCheck = false
+		if (req.headers.authorization) {
+			const base64Credentials = req.headers.authorization.split(' ')[1]
+			const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8')
+			const [username, password] = credentials.split(':')
+			if (username && password && username.toLowerCase() === 'rpdb' && password === settings.pass) {
+				passedCheck = true
+			}
+		}
+		if (!passedCheck) {
+			logging.log('Sonarr Webhook Error: Password incorrect')
+			res.status(500)
+			res.send('Password Incorrect')
+			return
+		}
+	}
+	if ((req.body || {}).eventType == 'Download' && !req.body.isUpgrade && (req.body.series || {}).path) {
+		const folderPath = req.body.series.path
+		logging.log('Sonarr Webhook Log: Received download event for: ' + folderPath)
+		if (!fs.existsSync(folderPath)) {
+			logging.log('Sonarr Webhook Error: Path "' + folderPath + '" is not accessible')
+			res.status(500)
+			res.send('Path inaccessible')
+			return
+		}
+		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
+		const fldrName = folderPath.split(path.sep).pop()
+		reqObj.name = fldrName
+		if (req.body.series.imdbId)
+			reqObj.imdbId = req.body.series.imdbId
+		if (req.body.series.tmdbId)
+			reqObj.tmdbId = req.body.series.tmdbId
+		if (req.body.series.tvdbId)
+			reqObj.tvdbId = req.body.series.tvdbId
+		setTimeout(() => {
+			nameQueue.unshift(reqObj)
+		}, settings.webhookDelay || 0)
+		logging.log(`${req.body.series.title} has been added to series`)
+		res.send('Success')
+	} else {
+		logging.log('Sonarr Webhook Log: Event not useful (not a download event or upgrading video)')
+		res.send('Event not useful')
+	}
+})
 
 app.get(baseUrl+'backup.json', (req, res) => passwordValid(req, res, (req, res) => {
 	const dt = new Date()
