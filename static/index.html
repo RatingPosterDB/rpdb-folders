@@ -1094,6 +1094,15 @@
                             <option value="dolbyvisioncoloralt">Dolby Vision [alt 2]</option>
                         </select>
                         <br/><br/><br/>
+                        <b>Aspect Ratio</b><br/><br/>
+                        <i style="opacity: 0.7">IMAX, etc</i>
+                        <br/><br/>
+                        <select id="aspect-badges">
+                            <option value="none">None</option>
+                            <option value="imaxgold">IMAX (Widescreen) [gold]</option>
+                            <option value="imax">IMAX (Widescreen) [silver]</option>
+                        </select>
+                        <br/><br/><br/>
                         <b>Video Source</b><br/><br/>
                         <i style="opacity: 0.7">Remux, BluRay, DVD, Web, etc</i>
                         <br/><br/>
@@ -3605,6 +3614,7 @@
                 $('#video-quality-badges').val($('#video-quality-badges option:first').val())
                 $('#3d-badges').val($('#3d-badges option:first').val())
                 $('#hdr-badges').val($('#hdr-badges option:first').val())
+                $('#aspect-badges').val($('#aspect-badges option:first').val())
                 $('#remux-badges').val($('#remux-badges option:first').val())
                 $('#codec-badges').val($('#codec-badges option:first').val())
                 $('#container-badges').val($('#container-badges option:first').val())
@@ -3782,6 +3792,7 @@
                             $('#video-quality-badges').val(),
                             $('#3d-badges').val(),
                             $('#hdr-badges').val(),
+                            $('#aspect-badges').val(),
                             $('#remux-badges').val(),
                             $('#codec-badges').val(),
                             $('#container-badges').val(),
@@ -3872,6 +3883,7 @@
                             $('#video-quality-badges').val(),
                             $('#3d-badges').val(),
                             $('#hdr-badges').val(),
+                            $('#aspect-badges').val(),
                             $('#remux-badges').val(),
                             $('#codec-badges').val(),
                             $('#container-badges').val(),
