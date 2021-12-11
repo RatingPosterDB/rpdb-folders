@@ -1966,7 +1966,7 @@ app.post(baseUrl+'sonarr', (req, res) => {
 				return
 			}
 		}
-		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true, type: 'series' }
+		const reqObj = { folder: folderPath, avoidYearMatch: true, type: 'series' }
 		reqObj.name = fldrName
 		if (req.body.series.imdbId)
 			reqObj.imdbId = req.body.series.imdbId
