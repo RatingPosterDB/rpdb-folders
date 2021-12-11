@@ -1884,16 +1884,30 @@ app.post(baseUrl+'radarr', (req, res) => {
 		}
 	}
 	if ((req.body || {}).eventType == 'Download' && !req.body.isUpgrade && (req.body.movie || {}).folderPath) {
-		const folderPath = req.body.movie.folderPath
+		let folderPath = req.body.movie.folderPath
+		const fldrName = folderPath.split(path.sep).pop()
 		logging.log('Radarr Webhook Log: Received download event for: ' + folderPath)
 		if (!fs.existsSync(folderPath)) {
-			logging.log('Radarr Webhook Error: Path "' + folderPath + '" is not accessible')
-			res.status(500)
-			res.send('Path inaccessible')
-			return
+			logging.log('Radarr Webhook Warning: Path "' + folderPath + '" is not accessible')
+			logging.log('Radarr Webhook Log: Scanning known movie folders for "' + fldrName + '"')
+			let foundFolder = false
+			settings.mediaFolders['movie'].some(el => {
+				if (fs.existsSync(path.join(el, fldrName))) {
+					logging.log('Radarr Webhook Log: Found "' + fldrName + '" in "' + el + '"')
+					foundFolder = true
+					folderPath = path.join(el, fldrName)
+					return true
+				}
+				return false
+			})
+			if (!foundFolder) {
+				logging.log('Radarr Webhook Error: Could not find "' + fldrName + '" in known movie folders')
+				res.status(500)
+				res.send('Path inaccessible')
+				return
+			}
 		}
 		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
-		const fldrName = folderPath.split(path.sep).pop()
 		reqObj.name = fldrName
 		if (req.body.movie.imdbId)
 			reqObj.imdbId = req.body.movie.imdbId
@@ -1929,16 +1943,30 @@ app.post(baseUrl+'sonarr', (req, res) => {
 		}
 	}
 	if ((req.body || {}).eventType == 'Download' && !req.body.isUpgrade && (req.body.series || {}).path) {
-		const folderPath = req.body.series.path
+		let folderPath = req.body.series.path
+		const fldrName = folderPath.split(path.sep).pop()
 		logging.log('Sonarr Webhook Log: Received download event for: ' + folderPath)
 		if (!fs.existsSync(folderPath)) {
-			logging.log('Sonarr Webhook Error: Path "' + folderPath + '" is not accessible')
-			res.status(500)
-			res.send('Path inaccessible')
-			return
+			logging.log('Sonarr Webhook Warning: Path "' + folderPath + '" is not accessible')
+			logging.log('Sonarr Webhook Log: Scanning known series folders for "' + fldrName + '"')
+			let foundFolder = false
+			settings.mediaFolders['series'].some(el => {
+				if (fs.existsSync(path.join(el, fldrName))) {
+					logging.log('Sonarr Webhook Log: Found "' + fldrName + '" in "' + el + '"')
+					foundFolder = true
+					folderPath = path.join(el, fldrName)
+					return true
+				}
+				return false
+			})
+			if (!foundFolder) {
+				logging.log('Sonarr Webhook Error: Could not find "' + fldrName + '" in known series folders')
+				res.status(500)
+				res.send('Path inaccessible')
+				return
+			}
 		}
 		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
-		const fldrName = folderPath.split(path.sep).pop()
 		reqObj.name = fldrName
 		if (req.body.series.imdbId)
 			reqObj.imdbId = req.body.series.imdbId
