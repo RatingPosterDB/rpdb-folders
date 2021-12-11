@@ -1919,7 +1919,7 @@ app.post(baseUrl+'radarr', (req, res) => {
 		logging.log(`${req.body.movie.title} has been added to movie`)
 		res.send('Success')
 	} else {
-		logging.log('Radarr Webhook Log: Event not useful (not a download event or upgrading video)')
+		logging.log('Radarr Webhook Log: "'+(req.body || {}).eventType+'" event not useful (not a download event or upgrading video)')
 		res.send('Event not useful')
 	}
 })
@@ -1980,7 +1980,7 @@ app.post(baseUrl+'sonarr', (req, res) => {
 		logging.log(`${req.body.series.title} has been added to series`)
 		res.send('Success')
 	} else {
-		logging.log('Sonarr Webhook Log: Event not useful (not a download event or upgrading video)')
+		logging.log('Sonarr Webhook Log: "'+(req.body || {}).eventType+'" event not useful (not a download event or upgrading video)')
 		res.send('Event not useful')
 	}
 })
