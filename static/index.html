@@ -124,6 +124,12 @@
                 padding: 5px;
                 cursor: text;
             }
+            .inline-input {
+                display: inline-block !important;
+            }
+            .edit-poster-buttons {
+                margin: 10px 8px !important;
+            }
         </style>
     </head>
     <body>
@@ -337,7 +343,7 @@
             <h1 class="dialog-title">Search Media Folder</h1>
             <div style="text-align: center">
                 <form class="pure-form">
-                    <input id="search-folder-input" placeholder="Search">
+                    <input id="search-folder-input" class="inline-input" placeholder="Search">
                     &nbsp;&nbsp;
                     <select id="choose-search-folder">
                     </select>
@@ -356,26 +362,19 @@
             <h1 class="dialog-title">Poster Edit</h1>
             <div style="text-align: center">
                 <img id="folder-poster-edit-img" src="" onerror="if (this.src && !this.src.endsWith('/')) { this.src='missing-poster.png' }">
-                <br/><br/><br/>
-                <button type="button" class="fix-match-button pure-button" onclick="openFixMatch()">Fix Match</button>
-                &nbsp;&nbsp;&nbsp;
-                <button type="button" class="pure-button" onclick="openChoosePoster()">Choose Poster</button>
-                &nbsp;&nbsp;&nbsp;
-                <button type="button" class="pure-button" onclick="openCustomPoster()">Custom Poster</button>
                 <br/><br/>
-                <button type="button" class="pure-button" onclick="updateRatingsPoster()">Update Ratings</button>
-                &nbsp;&nbsp;&nbsp;
-                <button type="button" class="pure-button" onclick="openCreatePoster()">Create Poster</button>
+                <button type="button" class="fix-match-button pure-button edit-poster-buttons" onclick="openFixMatch()">Fix Match</button>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="openChoosePoster()">Choose Poster</button>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="openCustomPoster()">Custom Poster</button>
                 <br/>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="updateRatingsPoster()">Update Ratings</button>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="openCreatePoster()">Create Poster</button>
                 <div id="update-ratings-poster-msg" style="display: none; opacity: 0.7"></div>
                 <br/>
-                <button type="button" class="pure-button open-add-badges-button" onclick="openAddBadges()">Add Badges / Label</button>
+                <button type="button" class="pure-button open-add-badges-button edit-poster-buttons" onclick="openAddBadges()">Add Badges / Label</button>
                 <br/>
-                <div id="update-ratings-poster-msg" style="display: none; opacity: 0.7"></div>
-                <br/>
-                <button type="button" class="pure-button" onclick="backToSearch()">Back</button>
-                &nbsp;&nbsp;&nbsp;
-                <button type="button" class="pure-button" onclick="closeFolderPosterEdit()">Close</button>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="backToSearch()">Back</button>
+                <button type="button" class="pure-button edit-poster-buttons" onclick="closeFolderPosterEdit()">Close</button>
                 <br/><br/><br/>
             </div>
         </div>
@@ -383,7 +382,7 @@
             <h1 class="dialog-title">Custom Poster</h1>
             <div id="custom-poster-allowed" style="text-align: center">
                 <form class="pure-form">
-                    <input type="text" id="custom-poster-input" placeholder="Image URL" />
+                    <input type="text" id="custom-poster-input" class="inline-input" placeholder="Image URL" />
                 </form>
                 <button type="button" class="pure-button pure-button-primary" onclick="loadCustomPoster()">Load Poster Image</button>
                 &nbsp;&nbsp;&nbsp;
@@ -425,7 +424,7 @@
                 <button type="button" class="pure-button" onclick="closeFixMediaFolder()">Close</button>
                 <br/><br/><br/><br/>
                 <form class="pure-form pure-form-aligned" id="fix-match-form" onsubmit="return addFixMatch()">
-                    <input type="text" id="imdb-url" placeholder="IMDB URL or IMDB ID" />
+                    <input type="text" id="imdb-url" class="inline-input" placeholder="IMDB URL or IMDB ID" />
                 </form>
                 <br/>
                 <button type="button" class="pure-button pure-button-primary" onclick="addFixMatch()">Add Match</button>
@@ -440,7 +439,7 @@
                 <button type="button" class="pure-button" onclick="closeChooseFolderByImdb()">Close</button>
                 <br/><br/><br/><br/>
                 <form class="pure-form pure-form-aligned" id="choose-imdb-match-form" onsubmit="return editPosterByImdb()">
-                    <input type="text" id="choose-imdb-url" placeholder="IMDB URL or IMDB ID" />
+                    <input type="text" id="choose-imdb-url" class="inline-input" placeholder="IMDB URL or IMDB ID" />
                 </form>
                 <br/>
                 <button type="button" class="pure-button pure-button-primary" onclick="editPosterByImdb()">Edit Poster</button>
@@ -471,14 +470,14 @@
                 <form class="pure-form pure-form-aligned" id="choose-pass-form" onsubmit="return save_new_pass()">
                     <fieldset>
                         <div class="pure-control-group">
-                            <input type="password" id="choose-pass-1" placeholder="Password" />
+                            <input type="password" id="choose-pass-1" class="inline-input" placeholder="Password" />
                         </div>
                         <br/>
                         <div class="pure-control-group">
-                            <input type="password" id="choose-pass-2" placeholder="Retype Password" />
+                            <input type="password" id="choose-pass-2" class="inline-input" placeholder="Retype Password" />
                         </div>
                         <br/>
-                        <button type="submit" class="pure-button pure-button-primary">Save Password</button>&nbsp;&nbsp;&nbsp;<button type="button" class="pure-button" onclick="closeChoosePassword()">Close</button>
+                        <button type="submit" class="pure-button pure-button-primary edit-poster-buttons">Save Password</button><button type="button" class="pure-button edit-poster-buttons" onclick="closeChoosePassword()">Close</button>
                         <br/><br/>
                         <div id="pass-no-match" style="display: none; opacity: 0.7">Passwords do not match.</div>
                     </fieldset>
@@ -519,7 +518,7 @@
                 </div>
                 <form class="pure-form">
                     <br/>
-                    <input type="text" id="label-text" placeholder="Label Text" />
+                    <input type="text" id="label-text" class="inline-input" placeholder="Label Text" />
                     <br/><br/>
                 </form>
             </div>
@@ -1242,15 +1241,15 @@
                 </div>
                 <form class="pure-form">
                     <br/>
-                    <input type="text" id="create-poster-img-url" placeholder="Image URL" />
+                    <input type="text" id="create-poster-img-url" class="inline-input" placeholder="Image URL" />
                     <br/><br/>
-                    <input type="text" id="create-poster-tmdb-url" placeholder="TMDB URL" />
+                    <input type="text" id="create-poster-tmdb-url" class="inline-input" placeholder="TMDB URL" />
                     <br/><br/>
-                    <input type="text" id="create-poster-imdb-url" placeholder="IMDB URL" />
+                    <input type="text" id="create-poster-imdb-url" class="inline-input" placeholder="IMDB URL" />
                     <br/><br/>
-                    <input type="text" id="create-poster-mc-url" placeholder="Metacritic URL" />
+                    <input type="text" id="create-poster-mc-url" class="inline-input" placeholder="Metacritic URL" />
                     <br/><br/>
-                    <input type="text" id="create-poster-rt-url" placeholder="Rotten Tomatoes URL" />
+                    <input type="text" id="create-poster-rt-url" class="inline-input" placeholder="Rotten Tomatoes URL" />
                     <br/><br/>
                     <b>Poster Type</b><br/><br/>
                     <select id="create-poster-type">
@@ -1262,22 +1261,22 @@
                     <div id="create-poster-default">
                         <br/>
                         <b>IMDB Rating (from 1.0 to 10.0)</b><br/><br/>
-                        <input type="text" id="create-poster-default-imdb" placeholder="IMDB Rating" />
+                        <input type="text" id="create-poster-default-imdb" class="inline-input" placeholder="IMDB Rating" />
                         <br/><br/>
                         <b>Metacritic (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-default-mc" placeholder="Metacritic Rating" />
+                        <input type="text" id="create-poster-default-mc" class="inline-input" placeholder="Metacritic Rating" />
                         <br/><br/>
                         <b>Rotten Tomatoes (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-default-rt" placeholder="Rotten Tomatoes Rating" />
+                        <input type="text" id="create-poster-default-rt" class="inline-input" placeholder="Rotten Tomatoes Rating" />
                         <br/><br/>
                     </div>
                     <div id="create-poster-certs" style="display: none">
                         <br/>
                         <b>IMDB Rating (from 1.0 to 10.0)</b><br/><br/>
-                        <input type="text" id="create-poster-certs-imdb" placeholder="IMDB Rating" />
+                        <input type="text" id="create-poster-certs-imdb" class="inline-input" placeholder="IMDB Rating" />
                         <br/><br/>
                         <b>Metacritic (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-certs-mc" placeholder="Metacritic Rating" />
+                        <input type="text" id="create-poster-certs-mc" class="inline-input" placeholder="Metacritic Rating" />
                         <br/><br/>
                         <b>Metacritic Certification</b><br/><br/>
                         <select id="create-poster-certs-mc-cert">
@@ -1286,7 +1285,7 @@
                         </select>
                         <br/><br/>
                         <b>Rotten Tomatoes (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-certs-rt" placeholder="Rotten Tomatoes Rating" />
+                        <input type="text" id="create-poster-certs-rt" class="inline-input" placeholder="Rotten Tomatoes Rating" />
                         <br/><br/>
                         <b>Rotten Tomatoes Certification</b><br/><br/>
                         <select id="create-poster-certs-rt-cert">
@@ -1299,10 +1298,10 @@
                     <div id="create-poster-rt" style="display: none">
                         <br/>
                         <b>IMDB Rating (from 1.0 to 10.0)</b><br/><br/>
-                        <input type="text" id="create-poster-rt-imdb" placeholder="IMDB Rating" />
+                        <input type="text" id="create-poster-rt-imdb" class="inline-input" placeholder="IMDB Rating" />
                         <br/><br/>
                         <b>Rotten Tomatoes (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-rt-rt" placeholder="Rotten Tomatoes Rating" />
+                        <input type="text" id="create-poster-rt-rt" class="inline-input" placeholder="Rotten Tomatoes Rating" />
                         <br/><br/>
                         <b>Rotten Tomatoes Certification</b><br/><br/>
                         <select id="create-poster-rt-rt-cert">
@@ -1312,7 +1311,7 @@
                         </select>
                         <br/><br/>
                         <b>Rotten Tomatoes Audience (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-rt-rtaudience" placeholder="Rotten Tomatoes Audience Rating" />
+                        <input type="text" id="create-poster-rt-rtaudience" class="inline-input" placeholder="Rotten Tomatoes Audience Rating" />
                         <br/><br/>
                         <b>Rotten Tomatoes Audience Certification</b><br/><br/>
                         <select id="create-poster-rt-rtaudience-cert">
@@ -1324,10 +1323,10 @@
                     <div id="create-poster-mc" style="display: none">
                         <br/>
                         <b>IMDB Rating (from 1.0 to 10.0)</b><br/><br/>
-                        <input type="text" id="create-poster-mc-imdb" placeholder="IMDB Rating" />
+                        <input type="text" id="create-poster-mc-imdb" class="inline-input" placeholder="IMDB Rating" />
                         <br/><br/>
                         <b>Metacritic (from 1 to 100)</b><br/><br/>
-                        <input type="text" id="create-poster-mc-mc" placeholder="Metacritic Rating" />
+                        <input type="text" id="create-poster-mc-mc" class="inline-input" placeholder="Metacritic Rating" />
                         <br/><br/>
                         <b>Metacritic Certification</b><br/><br/>
                         <select id="create-poster-mc-mc-cert">
@@ -1336,19 +1335,16 @@
                         </select>
                         <br/><br/>
                         <b>Metacritic Audience (from 1.0 to 10.0)</b><br/><br/>
-                        <input type="text" id="create-poster-mc-mcaudience" placeholder="Metacritic Audience Rating" />
+                        <input type="text" id="create-poster-mc-mcaudience" class="inline-input" placeholder="Metacritic Audience Rating" />
                         <br/><br/>
                     </div>
                 </form>
                 <div style="text-align: center">
-                    <button type="button" class="pure-button" onclick="openPreviewCreatePoster()">Preview Poster</button>
-                    &nbsp;&nbsp;&nbsp;
-                    <button type="button" class="pure-button" onclick="cancelCreatePoster()">Cancel</button>
-                    &nbsp;&nbsp;&nbsp;
-                    <button type="button" class="pure-button" onclick="submitCreatePoster()">Submit</button>
-                    &nbsp;&nbsp;&nbsp;
-                    <button type="button" class="pure-button pure-button-primary" onclick="saveCreatePoster()">Save &amp; Close</button>
-                    <br/><br/><div id="submit-poster-success"><b>Thank you for submitting your poster to RPDB!</b></div><br/><br/><br/>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="openPreviewCreatePoster()">Preview Poster</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="cancelCreatePoster()">Cancel</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="submitCreatePoster()">Submit</button>
+                    <button type="button" class="pure-button pure-button-primary edit-poster-buttons" onclick="saveCreatePoster()">Save &amp; Close</button>
+                    <br/><div id="submit-poster-success"><b>Thank you for submitting your poster to RPDB!</b></div><br/><br/><br/>
                 </div>
             </div>
         </div>
