@@ -3338,8 +3338,12 @@
                 $('.choose-imdb-error-message').hide()
                 $('#choose-folder-by-imdb').hide()
             }
+            function escapeRegex(string) {
+                return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            }
             function searchFolders(search) {
                 // show entire list if unmatched / missing posters is chosen
+                search = escapeRegex(search)
                 const specialFilter = ['Unmatched', 'Missing Posters'].includes(srcFolderName || '')
                 const noResults = searchStrings.forbiddenChar+searchStrings.forbiddenChar
                 if (searchStrings.folders == noResults || (!search && !specialFilter)) {
