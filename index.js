@@ -1907,7 +1907,7 @@ app.post(baseUrl+'radarr', (req, res) => {
 				return
 			}
 		}
-		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
+		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true, type: 'movie' }
 		reqObj.name = fldrName
 		if (req.body.movie.imdbId)
 			reqObj.imdbId = req.body.movie.imdbId
@@ -1966,7 +1966,7 @@ app.post(baseUrl+'sonarr', (req, res) => {
 				return
 			}
 		}
-		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true }
+		const reqObj = { folder: folderPath, forced: true, avoidYearMatch: true, type: 'series' }
 		reqObj.name = fldrName
 		if (req.body.series.imdbId)
 			reqObj.imdbId = req.body.series.imdbId
