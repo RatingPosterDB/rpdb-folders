@@ -24,6 +24,8 @@ const tvdbMatching = require('./matching/tvdb')
 const probeHelper = require('./probe')
 const logging = require('./logging')
 
+const plex = require('./plex')
+
 let queueDisabled = false
 
 const idToYearCache = {}
@@ -252,6 +254,28 @@ function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos,
 	return customPoster
 }
 
+function getVideoFile(task) {
+	let videoFile = false
+	if (!task.isFile && task.type == 'movie') {
+		if (fs.lstatSync(task.folder).isDirectory()) {
+			// get video filename
+			const folderVideos = getVideos(task.folder)
+			if ((folderVideos || []).length) {
+				folderVideos.some(el => {
+					if (!el) return
+					if (!path.basename(el).toLowerCase().includes('-trailer.')) {
+						videoFile = el
+						return true
+					}
+				})
+			}
+		} else {
+			// to not skip probing
+			videoFile = true
+		}
+	}
+	return videoFile
+}
 
 const nameQueue = async.queue((task, cb) => {
 
@@ -344,7 +368,28 @@ const nameQueue = async.queue((task, cb) => {
 			return
 		if (once) return
 		once = true
-		setTimeout(() => { cb() }, 1000) // 1s
+		setTimeout(() => {
+			cb()
+
+			if (!plexMediaFile)
+				plexMediaFile = getVideoFile(task)
+
+			let reqPlex = {}
+
+			if (task.type == 'movie' && !task.isFile && !plexMediaFile) {
+				logging.log('Warning: Could not find any video file for the movie in order to probe')
+			} else {
+				// have media file
+				reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder, mediaFolder: parentMediaFolder }
+			}
+
+			plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
+				if (!result && !Object.keys(reqPlex).length)
+					logging.log('Warning: Could not refresh metadata in Plex for "' + parentMediaFolder + '"')
+				else
+					logging.log('Refreshed metadata in Plex for "' + parentMediaFolder + '"')
+			}, reqPlex.mediaFolder)
+		}, 1000) // 1s
 	}
 
 	async function getPoster(imdbId) {
@@ -361,25 +406,7 @@ const nameQueue = async.queue((task, cb) => {
 
 		if (autoBadgeData) {
 			// overwrite badge string if auto badges are loaded
-			let videoFile = false
-			if (!task.isFile && task.type == 'movie') {
-				if (fs.lstatSync(task.folder).isDirectory()) {
-					// get video filename
-					const folderVideos = getVideos(task.folder)
-					if ((folderVideos || []).length) {
-						folderVideos.some(el => {
-							if (!el) return
-							if (!path.basename(el).toLowerCase().includes('-trailer.')) {
-								videoFile = el
-								return true
-							}
-						})
-					}
-				} else {
-					// to not skip probing
-					videoFile = true
-				}
-			}
+			let videoFile = plexMediaFile || getVideoFile(task)
 			let skipProbing = false
 			if (task.type == 'movie' && !task.isFile && !videoFile) {
 				logging.log('Warning: Could not find any video file for the movie in order to probe')
@@ -525,6 +552,8 @@ const nameQueue = async.queue((task, cb) => {
 		folderNameToImdb(task.name, task.type, getImages, task.forced, posterExists, task.avoidYearMatch)
 	}
 
+	let plexMediaFile = false
+
 	if (settings.overwriteMatches[task.type][task.name]) {
 		getImages(settings.overwriteMatches[task.type][task.name])
 	} else if (task.imdbId) {
@@ -549,43 +578,79 @@ const nameQueue = async.queue((task, cb) => {
 			}
 		})
 	} else {
+		plexMediaFile = getVideoFile(task)
 
-		// check to see if folder name already contains an id
+		let reqPlex = {}
 
-		const imdbIdInFolderName = imdbMatching.idInFolder(task.name)
-
-		if (imdbIdInFolderName) {
-			logging.log('Matched ' + task.name + ' by IMDB ID in folder name')
-			getImages(imdbIdInFolderName)
+		if (task.type == 'movie' && !task.isFile && !plexMediaFile) {
+			logging.log('Warning: Could not find any video file for the movie in order to probe')
 		} else {
-			const tmdbIdInFolderName = tmdbMatching.idInFolder(task.name)
-			if (tmdbIdInFolderName) {
-				tmdbMatching.tmdbToImdb(tmdbIdInFolderName, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
+			// have media file
+			reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder, mediaFolder: parentMediaFolder }
+		}
+
+		plex.pollForIdsByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, mediaIds => {
+			mediaIds = mediaIds || {}
+			if (mediaIds.imdb) {
+				settings.overwriteMatches[task.type][task.name] = mediaIds.imdb
+				getImages(mediaIds.imdb)
+			} else if (mediaIds.tmdb) {
+				tmdbMatching.tmdbToImdb(mediaIds.tmdb, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
 					if (imdbId) {
-						logging.log('Matched ' + task.name + ' by TMDB ID in folder name')
+						settings.overwriteMatches[task.type][task.name] = imdbId
+						getImages(imdbId)
+					} else {
+						matchBySearch()
+					}
+				})
+			} else if (mediaIds.tvdb) {
+				tvdbMatching.tvdbToImdb(mediaIds.tvdb, imdbId => {
+					if (imdbId) {
+						settings.overwriteMatches[task.type][task.name] = imdbId
 						getImages(imdbId)
 					} else {
 						matchBySearch()
 					}
 				})
 			} else {
-				const tvdbIdInFolderName = tvdbMatching.idInFolder(task.name)
-				if (tvdbIdInFolderName && task.type == 'series') {
-					// only series supports converting to imdb id
-					tvdbMatching.tvdbToImdb(tvdbIdInFolderName, imdbId => {
-						if (imdbId) {
-							logging.log('Matched ' + task.name + ' by TVDB ID in folder name')
-							getImages(imdbId)
+
+				// check to see if folder name already contains an id
+
+				const imdbIdInFolderName = imdbMatching.idInFolder(task.name)
+
+				if (imdbIdInFolderName) {
+					logging.log('Matched ' + task.name + ' by IMDB ID in folder name')
+					getImages(imdbIdInFolderName)
+				} else {
+					const tmdbIdInFolderName = tmdbMatching.idInFolder(task.name)
+					if (tmdbIdInFolderName) {
+						tmdbMatching.tmdbToImdb(tmdbIdInFolderName, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
+							if (imdbId) {
+								logging.log('Matched ' + task.name + ' by TMDB ID in folder name')
+								getImages(imdbId)
+							} else {
+								matchBySearch()
+							}
+						})
+					} else {
+						const tvdbIdInFolderName = tvdbMatching.idInFolder(task.name)
+						if (tvdbIdInFolderName && task.type == 'series') {
+							// only series supports converting to imdb id
+							tvdbMatching.tvdbToImdb(tvdbIdInFolderName, imdbId => {
+								if (imdbId) {
+									logging.log('Matched ' + task.name + ' by TVDB ID in folder name')
+									getImages(imdbId)
+								} else {
+									matchBySearch()
+								}
+							})
 						} else {
 							matchBySearch()
 						}
-					})
-				} else {
-					matchBySearch()
+					}
 				}
 			}
-		}
-
+		}, reqPlex.mediaFolder)
 	}
 
 }, 1)
@@ -1034,9 +1099,23 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		config.set('defaultBadges', settings.defaultBadges)
 	}
 
+	const plexObj = {
+		protocol: (req.query || {}).plexProtocol || 'https',
+		host: (req.query || {}).plexHost || '',
+		port: (req.query || {}).plexPort || '32400',
+		token: (req.query || {}).plexToken || ''
+	}
+
+	if (plexObj.protocol != settings.plex.protocol || plexObj.host != settings.plex.host || plexObj.port != settings.plex.port || plexObj.token != settings.plex.token) {
+		settings.plex = plexObj
+		config.set('plex', plexObj)
+	}
+
 	const scanOrder = (req.query || {}).scanOrder || false
-	settings.scanOrder = scanOrder || settings.scanOrder
-	config.set('scanOrder', settings.scanOrder)
+	if (scanOrder != settings.scanOrder) {
+		settings.scanOrder = scanOrder || settings.scanOrder
+		config.set('scanOrder', settings.scanOrder)
+	}
 	res.setHeader('Content-Type', 'application/json')
 	res.send({ success: true })	
 }))
@@ -1071,6 +1150,37 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		webhookDelay: settings.webhookDelay,
 		webhookSonarr: 'http://localhost:'+port+baseUrl+'sonarr',
 		webhookRadarr: 'http://localhost:'+port+baseUrl+'radarr',
+		plexProtocol: settings.plex.protocol,
+		plexHost: settings.plex.host,
+		plexPort: settings.plex.port,
+		plexToken: settings.plex.token
+	})
+}))
+
+app.get(baseUrl+'testPlex', (req, res) => passwordValid(req, res, (req, res) => {
+	function internalError() {
+		res.status(500)
+		res.send('Internal Server Error')
+	}
+	const testPlexData = {
+		plex: {
+			protocol: req.query.plexProtocol,
+			host: req.query.plexHost,
+			port: req.query.plexPort,
+			token: req.query.plexToken
+		}
+	}
+	if (!testPlexData.plex.protocol || !testPlexData.plex.host || !testPlexData.plex.port || !testPlexData.plex.token) {
+		plex.connected = false
+		internalError()
+		return
+	}
+	plex.testConnection(testPlexData, result => {
+		if (result) {
+			res.setHeader('Content-Type', 'application/json')
+			res.send({ success: true })
+		} else
+			internalError()
 	})
 }))
 
@@ -1421,6 +1531,7 @@ app.get(baseUrl+'pollData', (req, res) => passwordValid(req, res, (req, res) => 
 		lastFullUpdate,
 		historyCount: Object.keys(settings.imdbCache.movie || []).length + Object.keys(settings.imdbCache.series || []).length,
 		scanItems: nameQueue.length() || 0,
+		plexConnected: plex.connected,
 	})
 }))
 
@@ -2045,6 +2156,8 @@ setTimeout(async () => {
 					await open(httpServer)
 				} catch(e) {}
 			}
+			// test plex connection to get status
+			plex.testConnection({ plex: settings.plex }, result => { })
 		})
 	} else {
 		// process remote commands

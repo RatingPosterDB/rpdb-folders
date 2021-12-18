@@ -2321,6 +2321,14 @@
                     </div>
                     <br/><br/>
                 </div>
+                <b>Plex</b><br/><br/>
+                <div>
+                    <i style="opacity: 0.7">Optionally connect to Plex, guaranteed matching and trigger refresh metadata.</i>
+                    <br/><br/>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="startPlexConnection()" id="plex-connect-button">Connect to Plex</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="openPlexSettings()" id="plex-settings-button">Plex Settings</button>
+                    <br/><br/><br/><br/>
+                </div>
                 <b>Matching Order</b><br/><br/>
                 <div>
                     <i style="opacity: 0.7">Which internal matchers should be used and in which order.</i>
@@ -2358,6 +2366,42 @@
                 <br/><br/><br/>
             </div>
         </div>
+        <div id="plex-settings" class="full-page-dialog" style="display: none">
+            <center>
+                <h1 class="dialog-title">Plex Settings</h1>
+                <form class="pure-form badge-form">
+                    <b>Protocol</b><br/><br/>
+                    <div>
+                        <i style="opacity: 0.7">Default value is HTTPS</i>
+                        <br/><br/>
+                    </div>
+                    <select id="plex-protocol">
+                        <option value="https">HTTPS</option>
+                        <option value="http">HTTP</option>
+                    </select>
+                    <br/><br/><br/>
+                    <b>Address</b><br/><br/>
+                    <input type="text" id="plex-host" class="inline-input" placeholder="Plex Address" />
+                    <br/><br/><br/>
+                    <b>Port</b><br/><br/>
+                    <div>
+                        <i style="opacity: 0.7">Default value is 32400</i>
+                        <br/><br/>
+                    </div>
+                    <input type="text" id="plex-port" class="inline-input" placeholder="Plex Port" />
+                    <br/><br/><br/>
+                    <b>Token</b><br/><br/>
+                    <input type="text" id="plex-token" class="inline-input" placeholder="Plex Token" />
+                    <br/><br/>
+                    <div id="test-plex-connection-msg" style="display: none; opacity: 0.7"></div>
+                    <button type="button" class="pure-button pure-button-primary edit-poster-buttons" onclick="savePlexSettings()">Save Settings</button>
+                    <button id="test-plex-connection" type="button" class="pure-button edit-poster-buttons" onclick="testPlexConnection()">Test Connection</button>
+                    <br/>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="closePlexSettings()">Close</button>
+                    <br/><br/><br/>
+               </form>
+            </center>
+        </div>
         <div id="tier-3-only-message" class="full-page-dialog" style="display: none">
             <div style="text-align: center">
                 <br/><br/>
@@ -2387,6 +2431,7 @@
             var searchStrings = {}
             var searchFolderName = ''
             var searchFolderType = ''
+            var plexSettings = {}
             var apiKey
             function load_api_key(skipValidation) {
                 if ($('#api-key-error-1').is(':visible'))
@@ -2539,7 +2584,7 @@
                 var webhookDelay = $('input[name=webhookDelayRadios]:checked', '#webhook-delay-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&plexProtocol=' + plexSettings.protocol + '&plexHost=' + plexSettings.host + '&plexPort=' + plexSettings.port + '&plexToken=' + plexSettings.token + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -2586,6 +2631,7 @@
                     checkUpdate()
                     $.get('getSettings?pass=' + encodeURIComponent(servPass || ''), function(data) {
                         if ((data || {}).success) {
+                            plexSettings = { protocol: data.plexProtocol, host: data.plexHost, port: data.plexPort, token: data.plexToken }
                             if (data.webhookRadarr) {
                                 $('#webhookRadarr').val(data.webhookRadarr)
                             }
@@ -3596,6 +3642,220 @@
             function cancelScan() {
                 $.get('cancelScan?pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
+
+            function savePlexSettings() {
+                $.get('testPlex?' + getPlexQuery(), function(data) {
+                    if ((data || {}).success) {
+                        plexSettings.protocol = $('#plex-protocol').val() || 'https'
+                        plexSettings.host = $('#plex-host').val() || ''
+                        plexSettings.port = $('#plex-port').val() || '32400'
+                        plexSettings.token = ('#plex-token').val() || ''
+                        updateSettings()
+                        $('#plex-settings').hide()
+                        $('#test-plex-connection-msg').html('')
+                        $('#test-plex-connection-msg').hide()
+                    } else {
+                        $('#test-plex-connection-msg').html('<br/><span style="color: red">Could not connect to Plex, check your settings and try again</span><br/><br/>')
+                        $('#test-plex-connection-msg').show().fadeTo(180, 0.3).fadeTo(180, 1.0).fadeTo(180, 0.3).fadeTo(180, 1.0)
+                    }
+                }).fail(function(err) {
+                    $('#test-plex-connection-msg').html('<br/><span style="color: red">Could not connect to Plex, check your settings and try again</span><br/><br/>')
+                    $('#test-plex-connection-msg').show().fadeTo(180, 0.3).fadeTo(180, 1.0).fadeTo(180, 0.3).fadeTo(180, 1.0)
+                })
+            }
+
+            function openPlexSettings(tempSettings) {
+                $('#plex-protocol').val(tempSettings.protocol || plexSettings.protocol || 'https')
+                $('#plex-host').val(tempSettings.host || plexSettings.host || '')
+                $('#plex-port').val(tempSettings.port || plexSettings.port || '32400')
+                $('#plex-token').val(tempSettings.token || plexSettings.token || '')
+                $('#plex-settings').show()
+            }
+
+            function startPlexConnection() {
+                var rpdbAppName = 'Rating Poster Database'
+                var rpdbAppId = 'c41f9cfd-c5a6-478c-8558-338bcf042cf3'
+                var plexId = false
+                var plexCode = false
+                var authAppUrl = false
+                var pollingExpire = false
+                $.ajax({
+                    url : 'https://plex.tv/api/v2/pins',
+                    type: 'POST',
+                    data : {
+                        strong: 'true',
+                        'X-Plex-Product': rpdbAppName,
+                        'X-Plex-Client-Identifier': rpdbAppId
+                    },
+                    dataType: 'json',
+                    async : false,
+                    success: function(response, textStatus, jqXHR) {
+                        plexId = response.id
+                        plexCode = response.code
+                        authAppUrl = 'https://app.plex.tv/auth#?clientID=' + encodeURIComponent(rpdbAppId) + '&code=' + encodeURIComponent(plexCode) + '&context%5Bdevice%5D%5Bproduct%5D=' + encodeURIComponent(rpdbAppName)
+                        pollingExpire = (response.expiresIn || 1800) * 1000
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log(jqXHR)
+                        console.log(textStatus)
+                        console.log(errorThrown)
+                    }
+                })
+                if (authAppUrl) {
+                    var plexWin = window.open(authAppUrl, '_blank')
+                    var plexTimeout = setTimeout(() => {
+                        clearInterval(plexInterval)
+                    }, pollingExpire)
+                    var plexInterval = setInterval(() => {
+                        $.ajax({
+                            url : 'https://plex.tv/api/v2/pins/' + plexId,
+                            type: 'GET',
+                            data : { 'code': plexCode, 'X-Plex-Client-Identifier': rpdbAppId },
+                            dataType: 'json',
+                            async : true,
+                            success: function(response, textStatus, jqXHR) {
+                                if ((response || {}).authToken) {
+                                    clearInterval(plexInterval)
+                                    clearTimeout(plexTimeout)
+                                    var authToken = response.authToken
+                                    plexWin.close();
+                                    $.ajax({
+                                        url : 'https://plex.tv/api/resources',
+                                        type: 'GET',
+                                        data : {
+                                            'X-Plex-Product': rpdbAppName,
+                                            'X-Plex-Client-Identifier': rpdbAppId,
+                                            'X-Plex-Token': authToken
+                                        },
+                                        dataType: 'xml',
+                                        async : true,
+                                        success: function(response, textStatus, jqXHR) {
+                                            var servers = []
+                                            if (!$(response).find('Device').length)
+                                                return;
+                                            $(response).find('Device').each(function() {
+                                                if ($(this).attr('provides') == 'server' && $(this).find('Connection').length) {
+                                                    $(this).find('Connection').each(function() {
+                                                        servers.push({
+                                                            protocol: $(this).attr('protocol'),
+                                                            address: $(this).attr('address'),
+                                                            port: $(this).attr('port'),
+                                                            uri: $(this).attr('uri'),
+                                                            local: parseInt($(this).attr('local')),
+                                                        })
+                                                    })
+                                                }
+                                            })
+                                            function end(task) {
+                                                var tempSettings = {
+                                                    protocol: task.protocol,
+                                                    host: task.address,
+                                                    port: task.port,
+                                                    token: authToken,
+                                                }
+                                                openPlexSettings(tempSettings)
+                                                setTimeout(() => {
+                                                    $('#test-plex-connection').click()
+                                                })
+                                            }
+                                            function findServer() {
+                                                if (servers.length) {
+                                                    var task = servers.shift()
+                                                    if (task.uri) {
+                                                        $.ajax({
+                                                            url : task.uri + '/library/sections',
+                                                            type: 'GET',
+                                                            data : {
+                                                                'X-Plex-Product': rpdbAppName,
+                                                                'X-Plex-Client-Identifier': rpdbAppId,
+                                                                'X-Plex-Token': authToken
+                                                            },
+                                                            dataType: 'xml',
+                                                            async : true,
+                                                            success: function(response, textStatus, jqXHR) {
+                                                                if ($(response).find('Directory').length)
+                                                                    end(task)
+                                                                else
+                                                                    findServer()
+                                                            },
+                                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                                console.log(jqXHR)
+                                                                console.log(textStatus)
+                                                                console.log(errorThrown)
+                                                                findServer()
+                                                            }
+                                                        })
+                                                        return
+                                                    }
+                                                } else {
+                                                    end()
+                                                }
+                                                findServer()
+                                            }
+                                            findServer()
+                                        },
+                                        error: function (jqXHR, textStatus, errorThrown) {
+                                            console.log(jqXHR)
+                                            console.log(textStatus)
+                                            console.log(errorThrown)
+                                        }
+                                    })
+                                }
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                console.log(jqXHR)
+                                console.log(textStatus)
+                                console.log(errorThrown)
+                            }
+                        })
+                    }, 1000)
+                }
+
+            }
+
+            function closePlexSettings() {
+                // to update plex connection status
+                var currentSettings = getPlexQuery(true)
+                if (!currentSettings.host || !currentSettings.port || !currentSettings.token) {
+                    $('#plex-connect-button').show()
+                    $('#plex-settings-button').hide()
+                }
+                testPlexConnection(true)
+                $('#plex-settings').hide()
+                $('#test-plex-connection-msg').html('')
+                $('#test-plex-connection-msg').hide()
+            }
+
+            function getPlexQuery(useDefaults) {
+                var query = {
+                    protocol: $('#plex-protocol').val(),
+                    host: $('#plex-host').val(),
+                    port: $('#plex-port').val(),
+                    token: $('#plex-token').val(),
+                }
+                if (useDefaults) {
+                    query.protocol = plexSettings.protocol
+                    query.host = plexSettings.host
+                    query.port = plexSettings.port
+                }
+                return 'pass=' + encodeURIComponent(servPass || '') + '&plexProtocol=' + encodeURIComponent(query.protocol) + '&plexHost=' + encodeURIComponent(query.host) + '&plexPort=' + encodeURIComponent(query.port) + '&plexToken=' + encodeURIComponent(query.token)
+            }
+
+            function testPlexConnection(useDefaults) {
+                $.get('testPlex?' + getPlexQuery(useDefaults), function(data) {
+                    if ((data || {}).success) {
+                        $('#test-plex-connection-msg').html('<br/><span style="color: green">Successfully connected to Plex</span><br/><br/>')
+                        $('#test-plex-connection-msg').show().fadeTo(180, 0.3).fadeTo(180, 1.0).fadeTo(180, 0.3).fadeTo(180, 1.0)
+                    } else {
+                        $('#test-plex-connection-msg').html('<br/><span style="color: red">Could not connect to Plex, check your settings and try again</span><br/><br/>')
+                        $('#test-plex-connection-msg').show().fadeTo(180, 0.3).fadeTo(180, 1.0).fadeTo(180, 0.3).fadeTo(180, 1.0)
+                    }
+                }).fail(function(err) {
+                    $('#test-plex-connection-msg').html('<br/><span style="color: red">Could not connect to Plex, check your settings and try again</span><br/><br/>')
+                    $('#test-plex-connection-msg').show().fadeTo(180, 0.3).fadeTo(180, 1.0).fadeTo(180, 0.3).fadeTo(180, 1.0)
+                })
+            }
+
             function openCheckRequests() {
                 $.get('checkRequests?pass=' + encodeURIComponent(servPass || ''), function(data) {
                     if (data.req && data.limit) {
@@ -3968,6 +4228,14 @@
                         var dt = new Date(parseInt(data.lastFullUpdate))
                         $('#full-scan-msg').html('Last full scan started:<br/><br/>' + dt.toLocaleString())
                         $('.scan-status').text(data.scanItems ? 'Scanning (' + data.scanItems + ' items in queue)' : 'Idle, not scanning')
+                        if (data.plexConnected) {
+                            $('#plex-settings-button').show()
+                            $('#plex-connect-button').hide()
+                        } else {
+                            $('#plex-connect-button').show()
+                            $('#plex-settings-button').hide()
+                        }
+
                     }
                 });
             }

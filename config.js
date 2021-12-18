@@ -65,6 +65,7 @@ let map = {
     overwriteProbeData: false,
     unmatched: { movie: {}, series: {} },
     missingPosters: { movie: {}, series: {} },
+    plex: { protocol: 'https', host: '', port: '32400', token: '' },
     defaultBadges: {
         dolbyvision: 'dolbyvision',
         hdr: 'hdrcolor',
