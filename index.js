@@ -384,9 +384,10 @@ const nameQueue = async.queue((task, cb) => {
 			}
 
 			plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-				if (!result || !Object.keys(reqPlex).length)
-					logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
-				else
+				if (!result || !Object.keys(reqPlex).length) {
+					if (((settings || {}).plex || {}).token)
+						logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
+				} else
 					logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
 			}, reqPlex.mediaFolder)
 		}, 1000) // 1s
@@ -592,11 +593,13 @@ const nameQueue = async.queue((task, cb) => {
 		plex.pollForIdsByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, mediaIds => {
 			mediaIds = mediaIds || {}
 			if (mediaIds.imdb) {
+				logging.log('Matched ' + task.name + ' through Plex: ' + mediaIds.imdb)
 				settings.overwriteMatches[task.type][task.name] = mediaIds.imdb
 				getImages(mediaIds.imdb)
 			} else if (mediaIds.tmdb) {
 				tmdbMatching.tmdbToImdb(mediaIds.tmdb, task.type == 'movie' ? 'movie' : 'tv', imdbId => {
 					if (imdbId) {
+						logging.log('Matched ' + task.name + ' through Plex: ' + imdbId)
 						settings.overwriteMatches[task.type][task.name] = imdbId
 						getImages(imdbId)
 					} else {
@@ -606,6 +609,7 @@ const nameQueue = async.queue((task, cb) => {
 			} else if (mediaIds.tvdb) {
 				tvdbMatching.tvdbToImdb(mediaIds.tvdb, imdbId => {
 					if (imdbId) {
+						logging.log('Matched ' + task.name + ' through Plex: ' + imdbId)
 						settings.overwriteMatches[task.type][task.name] = imdbId
 						getImages(imdbId)
 					} else {

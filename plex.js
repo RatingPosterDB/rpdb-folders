@@ -238,11 +238,12 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 	}, mediaFolder)
 }
 
-plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) => {
+async function getSeriesFile(mediaType, file) {
 	if (mediaType == 'series') {
 		// this becomes more complicated here, we will need to find the first video in this folder
 
 		let foundSeriesVideo = false
+		let newFileLoc = false
 
 		const folders = await browser(file)
 
@@ -253,7 +254,6 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 			if ((seasonFolder || {}).path) {
 				const foldersAndVideos = await browser(seasonFolder.path, true)
 				if ((foldersAndVideos || []).length) {
-					let newFileLoc = false
 					foldersAndVideos.some(el => {
 						if (fileHelper.isVideo((el || {}).path || '')) {
 							newFileLoc = el.path
@@ -261,17 +261,29 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 						}
 					})
 					if (newFileLoc) {
-						file = newFileLoc
 						foundSeriesVideo = true
 					}
 				}
 			}
 		}
-		if (!foundSeriesVideo) {
+		return foundSeriesVideo ? newFileLoc : false
+	} else
+		return false
+}
+
+plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) => {
+	if (!((settings || {}).plex || {}).token) {
+		cb(false)
+		return
+	}	
+	if (mediaType == 'series') {
+		const episodeFile = await getSeriesFile(mediaType, file)
+		if (!episodeFile) {
 			logging.log('Warning: Could not find any video file for the series in order to refresh metadata in Plex.')
 			cb(false)
 			return
-		}
+		} else
+			file = episodeFile
 	}
 	const retrier = async.queue((task, taskCb) => {
 		plex.refreshByFile(task.settings, task.file, task.mediaType, result => {
@@ -280,13 +292,13 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 				taskCb()
 			} else {
 				if (!task.retries) task.retries = 0
-				if (task.retries < 5) {
+				if (task.retries < 6) {
 					task.retries++
-					logging.log('Could not find "'+task.file+'" in Plex, trying again in 3m')
+					logging.log('Could not find "'+task.file+'" in Plex, trying again in 1m')
 					retrier.push(task)
 					setTimeout(() => {
 						taskCb()
-					}, 3 * 60 * 1000) // try 5 times (once every 3m)
+					}, 1 * 60 * 1000) // try 6 times (once every 1m)
 				} else {
 					logging.log('Could not find "'+task.file+'" in Plex, giving up')
 					cb(false)
@@ -298,8 +310,20 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 	retrier.push({ settings, file, mediaType, cb, mediaFolder })
 }
 
-plex.pollForIdsByFile = (settings, file, mediaType, cb, mediaFolder) => {
-	const func = mediaType == 'movie' ? 'refreshByMovieSize' : 'refreshSeriesByEpisodeSize'
+plex.pollForIdsByFile = async (settings, file, mediaType, cb, mediaFolder) => {
+	if (!((settings || {}).plex || {}).token) {
+		cb(false)
+		return
+	}
+	if (mediaType == 'series') {
+		const episodeFile = await getSeriesFile(mediaType, file)
+		if (!episodeFile) {
+			logging.log('Warning: Could not find any video file for the series in order to refresh metadata in Plex.')
+			cb(false)
+			return
+		} else
+			file = episodeFile
+	}
 	const retrier = async.queue((task, taskCb) => {
 		plex.idsByFile(task.settings, task.file, task.mediaType, result => {
 			if (Object.keys(result || {}).length) {
@@ -308,17 +332,18 @@ plex.pollForIdsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 				return
 			} else {
 				if (!task.retries) task.retries = 0
-				if (task.retries < 3) {
+				if (task.retries < 6) {
 					task.retries++
-					logging.log('Could not find "'+mediaFolder+'" in Plex, trying again in 3m')
+					logging.log('Could not find "'+task.file+'" in Plex, trying again in 1m')
 					retrier.push(task)
+					setTimeout(() => {
+						taskCb()
+					}, 1 * 60 * 1000) // try 6 times (once every 1m)
 				} else {
-					logging.log('Could not find "'+mediaFolder+'" in Plex, giving up')
+					logging.log('Could not find "'+task.file+'" in Plex, giving up')
+					taskCb()
 				}
 			}
-			setTimeout(() => {
-				taskCb()
-			}, 3 * 60 * 1000) // try every 3m
 		}, task.mediaFolder)
 	})
 	retrier.push({ settings, file, mediaType, cb, mediaFolder })
