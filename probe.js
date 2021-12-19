@@ -126,6 +126,7 @@ const analyze = file => {
 				fileSize = stat.size
 				mediainfo.analyzeData(() => fileSize, readChunk).then(result => {
 					resolve((((result || {}).media || {}).track || []).some(el => !!((el || {})['@type'] == 'Video')) ? result : false)
+					end()
 				}).catch(e => {
 					if (mediainfo) {
 						mediainfo.close()
@@ -134,6 +135,7 @@ const analyze = file => {
 					logging.log('Warning: Could not probe video file')
 					console.error(e)
 					resolve(false)
+					end()
 				})
 			})
 		})
