@@ -4,6 +4,8 @@ const async = require('async')
 const path = require('path')
 const fs = require('fs')
 const logging = require('./logging')
+const browser = require('./browser')
+const fileHelper = require('./files')
 
 const cache = { movie: {}, series: {} }
 
@@ -45,8 +47,8 @@ plex.testConnection = (settings, cb) => {
 }
 
 plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
-	if (mediaFolder && cache.movie[mediaFolder]) {
-		cb(cache.movie[mediaFolder])
+	if (movieFile && cache.movie[movieFile]) {
+		cb(cache.movie[movieFile])
 		return
 	}
 	if (!(settings || {}).plex || !movieFile || !mediaSize) {
@@ -56,6 +58,17 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 	plex.getLibraries(settings, 'movie', libsByType => {
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
+			let libCount = libKeys.length
+			let libRespond = false
+			function libEnd(mediaIds) {
+				if (mediaIds) {
+					libRespond = true
+					cb(mediaIds)
+				}
+				libCount--
+				if (!libCount && !libRespond)
+					cb(false)
+			}
 			libKeys.forEach(libKey => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, (err, res) => {
@@ -74,7 +87,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 							})
 						})
 						if (mediaObj) {
-							const mediaIds = { plex: mediaObj.attributes.id }
+							const mediaIds = { plex: mediaObjParent.attributes.ratingKey }
 							mediaObjParent.children.forEach(el => {
 								if (el.name == 'Guid') {
 									if (((el.attributes || {}).id || '').startsWith('imdb://')) {
@@ -86,14 +99,14 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 									}
 								}
 							})
-							if (mediaFolder)
-								cache.movie[mediaFolder] = mediaIds
-							cb(mediaIds)
+							if (movieFile)
+								cache.movie[movieFile] = mediaIds
+							libEnd(mediaIds)
 						} else {
-							cb(false)
+							libEnd()
 						}
 					} else {
-						cb(false)
+						libEnd()
 					}
 				})
 			})
@@ -104,17 +117,28 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 }
 
 plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolder) => {
-	if (mediaFolder && cache.series[mediaFolder]) {
-		cb(cache.series[mediaFolder])
+	if (episodeFile && cache.series[episodeFile]) {
+		cb(cache.series[episodeFile])
 		return
 	}
-	if (!(settings || {}).plex || !movieFile || !mediaSize) {
+	if (!(settings || {}).plex || !episodeFile || !mediaSize) {
 		cb(false)
 		return
 	}
 	plex.getLibraries(settings, 'series', libsByType => {
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
+			let libCount = libKeys.length
+			let libRespond = false
+			function libEnd(mediaIds) {
+				if (mediaIds) {
+					libRespond = true
+					cb(mediaIds)
+				}
+				libCount--
+				if (!libCount && !libRespond)
+					cb(false)
+			}
 			libKeys.forEach(libKey => {
 			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, (err, res) => {
@@ -141,11 +165,11 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 															}
 														}
 													})
-													if (mediaFolder)
-														cache.series[mediaFolder] = mediaIds
-													cb(mediaIds)
+													if (episodeFile)
+														cache.series[episodeFile] = mediaIds
+													libEnd(mediaIds)
 												} else {
-													cb(false)
+													libEnd()
 												}
 											})
 											return true
@@ -155,9 +179,9 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 							})
 						})
 						if (!foundMedia)
-							cb(false)
+							libEnd()
 					} else {
-						cb(false)
+						libEnd()
 					}
 				})
 			})
@@ -184,28 +208,11 @@ plex.refreshById = (settings, mediaIds, cb) => {
 }
 
 plex.refreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
-	const func = mediaType == 'movie' ? 'findMovieBySize' : 'findSeriesByEpisodeSize'
-	plex[func](null, null, null, mediaIds => {
+	plex.idsByFile(settings, file, mediaType, mediaIds => {
 		if ((mediaIds || {}).plex) {
 			plex.refreshById(settings, mediaIds, cb, mediaFolder)
 		} else {
-			let mediaSize
-			try {
-				mediaSize = fs.statSync(file).size
-			} catch(e) {
-				logging.log('Warning: Cannot get file size for "' + file + '"')
-				logging.log('Warning: Without the file size, we cannot match this media to Plex')
-			}
-			if (mediaSize) {
-				plex[func](settings, file, mediaSize, mediaIds => {
-					if ((mediaIds || {}).plex) {
-						plex.refreshById(settings, mediaIds, cb, mediaFolder)
-					} else {
-						cb(false)
-					}
-				})
-			} else
-				cb(false)
+			cb(false)
 		}
 	}, mediaFolder)
 }
@@ -219,7 +226,10 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 			let mediaSize
 			try {
 				mediaSize = fs.statSync(file).size
-			} catch(e) {}
+			} catch(e) {
+				logging.log('Warning: Cannot get file size for "' + file + '"')
+				logging.log('Warning: Without the file size, we cannot match this media to Plex')
+			}
 			if (mediaSize) {
 				plex[func](settings, file, mediaSize, cb, mediaFolder)
 			} else
@@ -228,26 +238,61 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 	}, mediaFolder)
 }
 
-plex.pollForRefreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
+plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) => {
+	if (mediaType == 'series') {
+		// this becomes more complicated here, we will need to find the first video in this folder
+
+		let foundSeriesVideo = false
+
+		const folders = await browser(file)
+
+		if ((folders || []).length) {
+
+			const seasonFolder = folders[0]
+
+			if ((seasonFolder || {}).path) {
+				const foldersAndVideos = await browser(seasonFolder.path, true)
+				if ((foldersAndVideos || []).length) {
+					let newFileLoc = false
+					foldersAndVideos.some(el => {
+						if (fileHelper.isVideo((el || {}).path || '')) {
+							newFileLoc = el.path
+							return true
+						}
+					})
+					if (newFileLoc) {
+						file = newFileLoc
+						foundSeriesVideo = true
+					}
+				}
+			}
+		}
+		if (!foundSeriesVideo) {
+			logging.log('Warning: Could not find any video file for the series in order to refresh metadata in Plex.')
+			cb(false)
+			return
+		}
+	}
 	const retrier = async.queue((task, taskCb) => {
 		plex.refreshByFile(task.settings, task.file, task.mediaType, result => {
 			if (result) {
 				cb(result)
 				taskCb()
-				return
 			} else {
 				if (!task.retries) task.retries = 0
-				if (task.retries < 4) {
+				if (task.retries < 5) {
 					task.retries++
-					logging.log('Could not find "'+mediaFolder+'" in Plex, trying again in 3m')
+					logging.log('Could not find "'+task.file+'" in Plex, trying again in 3m')
 					retrier.push(task)
+					setTimeout(() => {
+						taskCb()
+					}, 3 * 60 * 1000) // try 5 times (once every 3m)
 				} else {
-					logging.log('Could not find "'+mediaFolder+'" in Plex, giving up')
+					logging.log('Could not find "'+task.file+'" in Plex, giving up')
+					cb(false)
+					taskCb()
 				}
 			}
-			setTimeout(() => {
-				taskCb()
-			}, 3 * 60 * 1000) // try 4 times every 3m
 		}, task.mediaFolder)
 	})
 	retrier.push({ settings, file, mediaType, cb, mediaFolder })
