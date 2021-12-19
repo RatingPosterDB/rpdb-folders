@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "express": "^4.17.1",
-    "name-to-imdb": "Ivshti/name-to-imdb#4df52ea69edecb28f154fffdbac34bb5487b521b",
+    "name-to-imdb": "Ivshti/name-to-imdb#1d5fa598936d0908e00e4293032fadbae660fe7a",
     "async": "^3.2.0",
     "needle": "2.6.0",
     "chokidar": "3.5.1",
