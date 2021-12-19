@@ -3646,6 +3646,8 @@
             function savePlexSettings() {
                 $.get('testPlex?' + getPlexQuery(), function(data) {
                     if ((data || {}).success) {
+                        $('#plex-connect-button').hide()
+                        $('#plex-settings-button').show()
                         plexSettings.protocol = $('#plex-protocol').val() || 'https'
                         plexSettings.host = $('#plex-host').val() || ''
                         plexSettings.port = $('#plex-port').val() || '32400'
