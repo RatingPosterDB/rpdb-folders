@@ -380,7 +380,7 @@ const nameQueue = async.queue((task, cb) => {
 				logging.log('Warning: Could not find any video file for the movie in order to probe')
 			} else {
 				// have media file
-				reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder, mediaFolder: parentMediaFolder }
+				reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
 			}
 
 			plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
@@ -586,7 +586,7 @@ const nameQueue = async.queue((task, cb) => {
 			logging.log('Warning: Could not find any video file for the movie in order to probe')
 		} else {
 			// have media file
-			reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder, mediaFolder: parentMediaFolder }
+			reqPlex = { settings, mediaFile: plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
 		}
 
 		plex.pollForIdsByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, mediaIds => {
