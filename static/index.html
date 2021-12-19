@@ -130,6 +130,13 @@
             .edit-poster-buttons {
                 margin: 10px 8px !important;
             }
+            #plex-status {
+                font-size: 90%;
+                padding: 10px;
+                border: 1px solid rgba(0,0,0,0.3);
+                margin-bottom: 10px;
+                display: inline-block;
+            }
         </style>
     </head>
     <body>
@@ -2325,8 +2332,11 @@
                 <div>
                     <i style="opacity: 0.7">Optionally connect to Plex, guaranteed matching and trigger refresh metadata.</i>
                     <br/><br/>
+                    <span id="plex-status">Status: Not Connected</span>
+                    <br/>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="startPlexConnection()" id="plex-connect-button">Connect to Plex</button>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="openPlexSettings()" id="plex-settings-button">Plex Settings</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="disconnectPlex()" id="plex-disconnect-button">Disconnect</button>
                     <br/><br/><br/><br/>
                 </div>
                 <b>Matching Order</b><br/><br/>
@@ -3643,15 +3653,26 @@
                 $.get('cancelScan?pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
 
+            function disconnectPlex() {
+                $.get('disconnectPlex?pass=' + encodeURIComponent(servPass || ''), function(data) {
+                    $('#plex-status').html('Status: Not Connected')
+                    $('#plex-connect-button').show()
+                    $('#plex-settings-button').hide()
+                    $('#plex-disconnect-button').hide()
+                })
+            }
+
             function savePlexSettings() {
                 $.get('testPlex?' + getPlexQuery(), function(data) {
                     if ((data || {}).success) {
+                        $('#plex-status').html('Status: <b style="color: green">Connected</b>')
                         $('#plex-connect-button').hide()
+                        $('#plex-disconnect-button').show()
                         $('#plex-settings-button').show()
                         plexSettings.protocol = $('#plex-protocol').val() || 'https'
                         plexSettings.host = $('#plex-host').val() || ''
                         plexSettings.port = $('#plex-port').val() || '32400'
-                        plexSettings.token = ('#plex-token').val() || ''
+                        plexSettings.token = $('#plex-token').val() || ''
                         updateSettings()
                         $('#plex-settings').hide()
                         $('#test-plex-connection-msg').html('')
@@ -3667,10 +3688,11 @@
             }
 
             function openPlexSettings(tempSettings) {
-                $('#plex-protocol').val(tempSettings.protocol || plexSettings.protocol || 'https')
-                $('#plex-host').val(tempSettings.host || plexSettings.host || '')
-                $('#plex-port').val(tempSettings.port || plexSettings.port || '32400')
-                $('#plex-token').val(tempSettings.token || plexSettings.token || '')
+                $('#test-plex-connection-msg').hide()
+                $('#plex-protocol').val((tempSettings || {}).protocol || plexSettings.protocol || 'https')
+                $('#plex-host').val((tempSettings || {}).host || plexSettings.host || '')
+                $('#plex-port').val((tempSettings || {}).port || plexSettings.port || '32400')
+                $('#plex-token').val((tempSettings || {}).token || plexSettings.token || '')
                 $('#plex-settings').show()
             }
 
@@ -3817,10 +3839,12 @@
 
             function closePlexSettings() {
                 // to update plex connection status
-                var currentSettings = getPlexQuery(true)
+                var currentSettings = getPlexQuery(true, true)
                 if (!currentSettings.host || !currentSettings.port || !currentSettings.token) {
+                    $('#plex-status').html('Status: Not Connected')
                     $('#plex-connect-button').show()
                     $('#plex-settings-button').hide()
+                    $('#plex-disconnect-button').hide()
                 }
                 testPlexConnection(true)
                 $('#plex-settings').hide()
@@ -3828,7 +3852,7 @@
                 $('#test-plex-connection-msg').hide()
             }
 
-            function getPlexQuery(useDefaults) {
+            function getPlexQuery(useDefaults, jsonResponse) {
                 var query = {
                     protocol: $('#plex-protocol').val(),
                     host: $('#plex-host').val(),
@@ -3840,6 +3864,8 @@
                     query.host = plexSettings.host
                     query.port = plexSettings.port
                 }
+                if (jsonResponse)
+                    return query
                 return 'pass=' + encodeURIComponent(servPass || '') + '&plexProtocol=' + encodeURIComponent(query.protocol) + '&plexHost=' + encodeURIComponent(query.host) + '&plexPort=' + encodeURIComponent(query.port) + '&plexToken=' + encodeURIComponent(query.token)
             }
 
@@ -4231,11 +4257,15 @@
                         $('#full-scan-msg').html('Last full scan started:<br/><br/>' + dt.toLocaleString())
                         $('.scan-status').text(data.scanItems ? 'Scanning (' + data.scanItems + ' items in queue)' : 'Idle, not scanning')
                         if (data.plexConnected) {
+                            $('#plex-status').html('Status: <b style="color: green">Connected</b>')
                             $('#plex-settings-button').show()
+                            $('#plex-disconnect-button').show()
                             $('#plex-connect-button').hide()
                         } else {
+                            $('#plex-status').html('Status: Not Connected')
                             $('#plex-connect-button').show()
                             $('#plex-settings-button').hide()
+                            $('#plex-disconnect-button').hide()
                         }
 
                     }

@@ -18,6 +18,7 @@ plex.getLibraries = (settings, type, cb) => {
 		const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 		needle.get(url, (err, res) => {
 			if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((res.body || {}).children || []).length) {
+				plex.connected = true
 				let libsByType = []
 				if (plexType)
 					res.body.children.forEach(el => {
@@ -59,6 +60,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+						plex.connected = true
 						let mediaObj = false
 						res.body.children.some(mediaEl => {
 							return mediaEl.children.some(el => {
@@ -117,6 +119,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+						plex.connected = true
 						const foundMedia = res.body.children.some(mediaEl => {
 							return mediaEl.children.some(el => {
 								if ((el || {}).name == 'Media') {
@@ -169,6 +172,7 @@ plex.refreshById = (settings, mediaIds, cb) => {
 		const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/metadata/' + mediaIds.plex + '/refresh'
 		needle.put(url, null, { headers: {  'X-Plex-Product': rpdbAppName, 'X-Plex-Client-Identifier': rpdbAppId, 'X-Plex-Token': settings.plex.token, origin: 'https://app.plex.tv', referer: 'https://app.plex.tv/' } }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
+				plex.connected = true
 				cb(true)
 			} else {
 				cb(false)

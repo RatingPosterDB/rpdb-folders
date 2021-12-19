@@ -1157,6 +1157,19 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 	})
 }))
 
+app.get(baseUrl+'disconnectPlex', (req, res) => passwordValid(req, res, (req, res) => {
+	settings.plex = {
+		protocol: 'https',
+		host: '',
+		port: '32400',
+		token: ''
+	}
+	config.set('plex', settings.plex)
+	plex.connected = false
+	res.setHeader('Content-Type', 'application/json')
+	res.send({ success: true })
+}))
+
 app.get(baseUrl+'testPlex', (req, res) => passwordValid(req, res, (req, res) => {
 	function internalError() {
 		res.status(500)
