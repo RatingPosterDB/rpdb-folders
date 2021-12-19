@@ -3838,7 +3838,6 @@
             }
 
             function closePlexSettings() {
-                // to update plex connection status
                 var currentSettings = getPlexQuery(true, true)
                 if (!currentSettings.host || !currentSettings.port || !currentSettings.token) {
                     $('#plex-status').html('Status: Not Connected')
@@ -3846,6 +3845,7 @@
                     $('#plex-settings-button').hide()
                     $('#plex-disconnect-button').hide()
                 }
+                // to update plex connection status
                 testPlexConnection(true)
                 $('#plex-settings').hide()
                 $('#test-plex-connection-msg').html('')
