@@ -184,7 +184,7 @@ plex.refreshById = (settings, mediaIds, cb) => {
 }
 
 plex.refreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
-	const func = mediaType == 'movie' ? 'refreshByMovieSize' : 'refreshSeriesByEpisodeSize'
+	const func = mediaType == 'movie' ? 'findMovieBySize' : 'findSeriesByEpisodeSize'
 	plex[func](null, null, null, mediaIds => {
 		if ((mediaIds || {}).plex) {
 			plex.refreshById(settings, mediaIds, cb, mediaFolder)
@@ -211,7 +211,7 @@ plex.refreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
 }
 
 plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
-	const func = mediaType == 'movie' ? 'refreshByMovieSize' : 'refreshSeriesByEpisodeSize'
+	const func = mediaType == 'movie' ? 'findMovieBySize' : 'findSeriesByEpisodeSize'
 	plex[func](null, null, null, mediaIds => {
 		if (Object.keys(mediaIds || {}).length) {
 			cb(mediaIds)
@@ -229,7 +229,6 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 }
 
 plex.pollForRefreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
-	const func = mediaType == 'movie' ? 'refreshByMovieSize' : 'refreshSeriesByEpisodeSize'
 	const retrier = async.queue((task, taskCb) => {
 		plex.refreshByFile(task.settings, task.file, task.mediaType, result => {
 			if (result) {
