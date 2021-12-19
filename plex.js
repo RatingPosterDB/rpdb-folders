@@ -1,5 +1,6 @@
 
 const needle = require('needle')
+const async = require('async')
 const path = require('path')
 const fs = require('fs')
 const logging = require('./logging')
