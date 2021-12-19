@@ -107,6 +107,7 @@ const analyze = file => {
 		}
 
 		fs.open(file, 'r', async (err, handle) => {
+			fileHandle = handle
 			if (err) {
 				logging.log('Warning: Could not open video file in order to probe video')
 				console.error(err)
@@ -114,7 +115,6 @@ const analyze = file => {
 				end()
 				return
 			}
-			fileHandle = handle
 			fs.fstat(fileHandle, async (err, stat) => {
 				if (err) {
 					logging.log('Warning: Could not retrieve video file stats in order to probe video')
@@ -143,7 +143,7 @@ const analyze = file => {
 		function end() {
 			// mediainfo.close() ?
 			if (fileHandle)
-				fs.close(fileHandle, () => {})
+				fs.close(fileHandle, () => { fileHandle = false })
 		}
 	})
 }
@@ -339,7 +339,6 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 
 var resolution = [
     { name: '480p', width: 852, height: 480 },
-    { name: '576p', width: 768, height: 576 },
     { name: '720p', width: 1280, height: 720 },
     { name: '1080p', width: 1920, height: 1080 },
     { name: '2k', width: 2048, height: 1080 },
