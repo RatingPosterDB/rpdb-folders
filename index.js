@@ -377,19 +377,20 @@ const nameQueue = async.queue((task, cb) => {
 			let reqPlex = {}
 
 			if (task.type == 'movie' && !task.isFile && !plexMediaFile) {
-				logging.log('Warning: Could not find any video file for the movie in order to probe')
+				logging.log('Warning: Could not find video file in order to refresh metadata in Plex')
 			} else {
 				// have media file
 				reqPlex = { settings, mediaFile: task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
 			}
 
-			plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-				if (!result || !Object.keys(reqPlex).length) {
-					if (((settings || {}).plex || {}).token)
-						logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
-				} else
-					logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
-			}, reqPlex.mediaFolder)
+			if (reqPlex.mediaFile)
+				plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
+					if (!result || !Object.keys(reqPlex).length) {
+						if (((settings || {}).plex || {}).token)
+							logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
+					} else
+						logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
+				}, reqPlex.mediaFolder)
 		}, 1000) // 1s
 	}
 

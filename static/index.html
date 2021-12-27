@@ -3743,10 +3743,12 @@
                                     clearTimeout(plexTimeout)
                                     var authToken = response.authToken
                                     plexWin.close();
+                                    // get HTTPS server URLs
                                     $.ajax({
                                         url : 'https://plex.tv/api/resources',
                                         type: 'GET',
                                         data : {
+                                            'includeHttps': '1',
                                             'X-Plex-Product': rpdbAppName,
                                             'X-Plex-Client-Identifier': rpdbAppId,
                                             'X-Plex-Token': authToken
@@ -3755,68 +3757,110 @@
                                         async : true,
                                         success: function(response, textStatus, jqXHR) {
                                             var servers = []
-                                            if (!$(response).find('Device').length)
-                                                return;
-                                            $(response).find('Device').each(function() {
-                                                if ($(this).attr('provides') == 'server' && $(this).find('Connection').length) {
-                                                    $(this).find('Connection').each(function() {
-                                                        servers.push({
-                                                            protocol: $(this).attr('protocol'),
-                                                            address: $(this).attr('address'),
-                                                            port: $(this).attr('port'),
-                                                            uri: $(this).attr('uri'),
-                                                            local: parseInt($(this).attr('local')),
+                                            if ($(response).find('Device').length) {
+                                                $(response).find('Device').each(function() {
+                                                    if ($(this).attr('provides') == 'server' && $(this).find('Connection').length) {
+                                                        $(this).find('Connection').each(function() {
+                                                            if ($(this).attr('uri'))
+                                                                servers.push({
+                                                                    protocol: $(this).attr('protocol'),
+                                                                    address: $(this).attr('address'),
+                                                                    port: $(this).attr('port'),
+                                                                    uri: $(this).attr('uri'),
+                                                                    local: parseInt($(this).attr('local')),
+                                                                })
                                                         })
-                                                    })
-                                                }
-                                            })
-                                            function end(task) {
-                                                var tempSettings = {
-                                                    protocol: task.protocol,
-                                                    host: task.address,
-                                                    port: task.port,
-                                                    token: authToken,
-                                                }
-                                                openPlexSettings(tempSettings)
-                                                setTimeout(() => {
-                                                    $('#test-plex-connection').click()
+                                                    }
                                                 })
                                             }
-                                            function findServer() {
-                                                if (servers.length) {
-                                                    var task = servers.shift()
-                                                    if (task.uri) {
-                                                        $.ajax({
-                                                            url : task.uri + '/library/sections',
-                                                            type: 'GET',
-                                                            data : {
-                                                                'X-Plex-Product': rpdbAppName,
-                                                                'X-Plex-Client-Identifier': rpdbAppId,
-                                                                'X-Plex-Token': authToken
-                                                            },
-                                                            dataType: 'xml',
-                                                            async : true,
-                                                            success: function(response, textStatus, jqXHR) {
-                                                                if ($(response).find('Directory').length)
-                                                                    end(task)
-                                                                else
-                                                                    findServer()
-                                                            },
-                                                            error: function (jqXHR, textStatus, errorThrown) {
-                                                                console.log(jqXHR)
-                                                                console.log(textStatus)
-                                                                console.log(errorThrown)
-                                                                findServer()
+                                            // get HTTP server URLs
+                                            $.ajax({
+                                                url : 'https://plex.tv/api/resources',
+                                                type: 'GET',
+                                                data : {
+                                                    'X-Plex-Product': rpdbAppName,
+                                                    'X-Plex-Client-Identifier': rpdbAppId,
+                                                    'X-Plex-Token': authToken
+                                                },
+                                                dataType: 'xml',
+                                                async : true,
+                                                success: function(response, textStatus, jqXHR) {
+                                                    if ($(response).find('Device').length) {
+                                                        $(response).find('Device').each(function() {
+                                                            if ($(this).attr('provides') == 'server' && $(this).find('Connection').length) {
+                                                                $(this).find('Connection').each(function() {
+                                                                    if ($(this).attr('uri'))
+                                                                        servers.push({
+                                                                            protocol: $(this).attr('protocol'),
+                                                                            address: $(this).attr('address'),
+                                                                            port: $(this).attr('port'),
+                                                                            uri: $(this).attr('uri'),
+                                                                            local: parseInt($(this).attr('local')),
+                                                                        })
+                                                                })
                                                             }
                                                         })
-                                                        return
                                                     }
-                                                } else {
-                                                    end()
+                                                    if (!servers.length) {
+                                                        console.log('Could not find any Plex servers')
+                                                        return;
+                                                    }
+                                                    console.log('servers', servers)
+                                                    function end(task) {
+                                                        var uriParts = new URL(task.uri)
+                                                        var tempSettings = {
+                                                            protocol: uriParts.protocol.replace(':',''),
+                                                            host: uriParts.hostname,
+                                                            port: uriParts.port,
+                                                            token: authToken,
+                                                        }
+                                                        openPlexSettings(tempSettings)
+                                                        setTimeout(() => {
+                                                            $('#test-plex-connection').click()
+                                                        })
+                                                    }
+                                                    function findServer() {
+                                                        if (servers.length) {
+                                                            var task = servers.shift()
+                                                            if (task.uri) {
+                                                                $.ajax({
+                                                                    url : task.uri + '/library/sections',
+                                                                    type: 'GET',
+                                                                    data : {
+                                                                        'X-Plex-Product': rpdbAppName,
+                                                                        'X-Plex-Client-Identifier': rpdbAppId,
+                                                                        'X-Plex-Token': authToken
+                                                                    },
+                                                                    dataType: 'xml',
+                                                                    async : true,
+                                                                    success: function(response, textStatus, jqXHR) {
+                                                                        if ($(response).find('Directory').length)
+                                                                            end(task)
+                                                                        else
+                                                                            findServer()
+                                                                    },
+                                                                    error: function (jqXHR, textStatus, errorThrown) {
+                                                                        console.log(jqXHR)
+                                                                        console.log(textStatus)
+                                                                        console.log(errorThrown)
+                                                                        findServer()
+                                                                    }
+                                                                })
+                                                                return
+                                                            }
+                                                        } else {
+                                                            end()
+                                                        }
+                                                        findServer()
+                                                    }
+                                                    findServer()
+                                                },
+                                                error: function (jqXHR, textStatus, errorThrown) {
+                                                    console.log(jqXHR)
+                                                    console.log(textStatus)
+                                                    console.log(errorThrown)
                                                 }
-                                                findServer()
-                                            }
-                                            findServer()
+                                            })
                                         },
                                         error: function (jqXHR, textStatus, errorThrown) {
                                             console.log(jqXHR)
