@@ -341,6 +341,7 @@ plex.pollForIdsByFile = async (settings, file, mediaType, cb, mediaFolder) => {
 					}, 1 * 60 * 1000) // try 6 times (once every 1m)
 				} else {
 					logging.log('Could not find "'+task.file+'" in Plex, giving up')
+					cb(false)
 					taskCb()
 				}
 			}
