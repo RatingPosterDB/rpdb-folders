@@ -240,12 +240,14 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 						return
 					}
 					if (mediaType == 'movie') {
-						const videos = (getVideos(path.dirname(file)) || []).filter(el => !el.includes('-trailer.'))
+						const videos = (getVideos(path.dirname(file)) || []).filter(el => !path.basename(el).toLowerCase().includes('-trailer.'))
 						if (videos.length > 1) {
 							logging.log('Detected possible movie with multiple video files, attempting to match')
 							let sumSize = 0
 							videos.forEach(el => {
-								if (!['cd','disc','disk','dvd','part','pt'].some(part => path.basename(el).toLowerCase().includes(part)))
+								const partFileTags = ['cd','disc','disk','dvd','part','pt']
+								const isPartFile = partFileTags.some(part => !!(path.basename(el).match(new RegExp(' '+part+'[1|2|3|4]\.','gi')) || []).length)
+								if (!isPartFile)
 									return
 								let mediaSize
 								try {
