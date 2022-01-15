@@ -1014,7 +1014,7 @@ const plexTodRefreshQueue = async.queue((task, cb) => {
 }, 1)
 
 function setPlexTodUpdate() {
-	if (setting.plexDelayType == 'tod') {
+	if (settings.plexDelayType == 'tod') {
 		const now = new Date()
 		let millisTillTrigger = new Date(now.getFullYear(), now.getMonth(), now.getDate(), settings.plexTodHour + (settings.plexTodAmPm == 'PM' ? 12 : 0), settings.plexTodMin, 0, 0)
 		if (millisTillTrigger < 0)
