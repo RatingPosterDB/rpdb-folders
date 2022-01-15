@@ -66,6 +66,11 @@ let map = {
     unmatched: { movie: {}, series: {} },
     missingPosters: { movie: {}, series: {} },
     plex: { protocol: 'https', host: '', port: '32400', token: '' },
+    plexDelayType: false,
+    plexRefreshDelay: 0,
+    plexTodHour: 1,
+    plexTodMin: 0,
+    plexTodAmPm: 'AM',
     defaultBadges: {
         dolbyvision: 'dolbyvision',
         hdr: 'hdrcolor',

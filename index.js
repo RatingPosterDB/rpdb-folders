@@ -381,16 +381,20 @@ const nameQueue = async.queue((task, cb) => {
 			} else {
 				// have media file
 				reqPlex = { settings, mediaFile: task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
+				if (setting.plexDelayType == 'tod')
+					plexTodQueue.push(reqPlex)
 			}
 
-			if (reqPlex.mediaFile)
-				plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-					if (!result || !Object.keys(reqPlex).length) {
-						if (((settings || {}).plex || {}).token)
-							logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
-					} else
-						logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
-				}, reqPlex.mediaFolder)
+			if (reqPlex.mediaFile && setting.plexDelayType != 'tod')
+				setTimeout(() => {
+					plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
+						if (!result || !Object.keys(reqPlex).length) {
+							if (((settings || {}).plex || {}).token)
+								logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
+						} else
+							logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
+					}, reqPlex.mediaFolder)
+				}, setting.plexDelayType == 'delay' ? (settings.plexRefreshDelay || 0) : 0)
 		}, 1000) // 1s
 	}
 
@@ -991,6 +995,82 @@ app.get(baseUrl+'savePass', (req, res) => passwordValid(req, res, (req, res) => 
 
 let avoidOptimizedBackdropsScan = false
 
+let plexTodTimeout = false
+
+let plexTodQueue = []
+
+const plexTodRefreshQueue = async.queue((task, cb) => {
+	const reqPlex = task
+	plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
+		if (!result || !Object.keys(reqPlex).length) {
+			if (((settings || {}).plex || {}).token)
+				logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
+		} else
+			logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
+		setTimeout(() => {
+			cb()
+		}, 1000)
+	}, reqPlex.mediaFolder)
+}, 1)
+
+function setPlexTodUpdate() {
+	if (setting.plexDelayType == 'tod') {
+		const now = new Date()
+		let millisTillTrigger = new Date(now.getFullYear(), now.getMonth(), now.getDate(), settings.plexTodHour + (settings.plexTodAmPm == 'PM' ? 12 : 0), settings.plexTodMin, 0, 0)
+		if (millisTillTrigger < 0)
+			millisTillTrigger += 86400000 // after target time, set for tomorrow
+		plexTodTimeout = setTimeout(() => {
+			if (plexTodQueue.length) {
+				logging.log('Starting metadata refresh for items in Plex, items queued: ' + plexTodQueue.length)
+				plexTodQueue.forEach(el => {
+					plexTodRefreshQueue.push(el)
+				})
+				plexTodQueue = []
+			}
+			setTimeout(() => {
+				setPlexTodUpdate()
+			}, 61 * 1000)
+		}, millisTillTrigger)
+	}
+}
+
+app.get(baseUrl+'savePlexRefreshSettings', (req, res) => passwordValid(req, res, (req, res) => {
+	if (plexTodTimeout) {
+		clearTimeout(plexTodTimeout)
+		plexTodTimeout = false
+	}
+	let plexDelayType = (req.query || {}).plexDelayType || 'none'
+	if (plexDelayType == 'none')
+		plexDelayType = false
+	const plexRefreshDelay = parseInt((req.query || {}).plexRefreshDelay || '0')
+	const plexTodHour = parseInt((req.query || {}).plexTodHour || '1')
+	const plexTodMin = parseInt((req.query || {}).plexTodMin || '0')
+	const plexTodAmPm = (req.query || {}).plexTodAmPm || 'AM'
+	if (plexDelayType != settings.plexDelayType) {
+		settings.plexDelayType = plexDelayType
+		config.set('plexDelayType', settings.plexDelayType)
+	}
+	if (plexRefreshDelay != settings.plexRefreshDelay) {
+		settings.plexRefreshDelay = plexRefreshDelay
+		config.set('plexRefreshDelay', settings.plexRefreshDelay)
+	}
+	if (plexTodHour != settings.plexTodHour) {
+		settings.plexTodHour = plexTodHour
+		config.set('plexTodHour', settings.plexTodHour)
+	}
+	if (plexTodMin != settings.plexTodMin) {
+		settings.plexTodMin = plexTodMin
+		config.set('plexTodMin', settings.plexTodMin)
+	}
+	if (plexTodAmPm != settings.plexTodAmPm) {
+		settings.plexTodAmPm = plexTodAmPm
+		config.set('plexTodAmPm', settings.plexTodAmPm)
+	}
+	setPlexTodUpdate()
+	res.setHeader('Content-Type', 'application/json')
+	res.send({ success: true })
+}))
+
 app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) => {
 	const moviePosterType = (req.query || {}).moviePosterType || 'poster-default'
 	if (moviePosterType != settings.moviePosterType) {
@@ -1158,7 +1238,12 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		plexProtocol: settings.plex.protocol,
 		plexHost: settings.plex.host,
 		plexPort: settings.plex.port,
-		plexToken: settings.plex.token
+		plexToken: settings.plex.token,
+		plexDelayType: settings.plexDelayType,
+		plexRefreshDelay: settings.plexRefreshDelay,
+		plexTodHour: settings.plexTodHour,
+		plexTodMin: settings.plexTodMin,
+		plexTodAmPm: settings.plexTodAmPm,
 	})
 }))
 
@@ -2175,7 +2260,11 @@ setTimeout(async () => {
 				} catch(e) {}
 			}
 			// test plex connection to get status
-			plex.testConnection({ plex: settings.plex }, result => { })
+			plex.testConnection({ plex: settings.plex }, result => {
+				setTimeout(() => {
+					setPlexTodUpdate()
+				}, 60 * 1000)
+			})
 		})
 	} else {
 		// process remote commands

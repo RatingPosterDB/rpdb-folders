@@ -2335,7 +2335,9 @@
                     <span id="plex-status">Status: Not Connected</span>
                     <br/>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="startPlexConnection()" id="plex-connect-button">Connect to Plex</button>
-                    <button type="button" class="pure-button edit-poster-buttons" onclick="openPlexSettings()" id="plex-settings-button">Plex Settings</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="openPlexSettings()" id="plex-settings-button">Connection Settings</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="openPlexRefreshSettings()" id="plex-refresh-settings-button">Refresh Settings</button>
+                    <br/>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="disconnectPlex()" id="plex-disconnect-button">Disconnect</button>
                     <br/><br/><br/><br/>
                 </div>
@@ -2378,7 +2380,7 @@
         </div>
         <div id="plex-settings" class="full-page-dialog" style="display: none">
             <center>
-                <h1 class="dialog-title">Plex Settings</h1>
+                <h1 class="dialog-title">Plex Connection Settings</h1>
                 <form class="pure-form badge-form">
                     <b>Protocol</b><br/><br/>
                     <div>
@@ -2391,7 +2393,7 @@
                     </select>
                     <br/><br/><br/>
                     <b>Address</b><br/><br/>
-                    <input type="text" id="plex-host" class="inline-input" placeholder="Plex Address" />
+                    <input type="text" id="plex-host" class="inline-input" placeholder="Plex Address" style="width: 495px; max-width: 90%" />
                     <br/><br/><br/>
                     <b>Port</b><br/><br/>
                     <div>
@@ -2408,6 +2410,141 @@
                     <button id="test-plex-connection" type="button" class="pure-button edit-poster-buttons" onclick="testPlexConnection()">Test Connection</button>
                     <br/>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="closePlexSettings()">Cancel</button>
+                    <br/><br/><br/>
+               </form>
+            </center>
+        </div>
+        <div id="plex-refresh-settings" class="full-page-dialog" style="display: none">
+            <center>
+                <h1 class="dialog-title">Plex Refresh Settings</h1>
+                <i style="opacity: 0.7">By default Plex items are refreshed immediately after a new poster or backdrop is downloaded, but a delay or time of day can be set</i>
+                <br/><br/><br/>
+                <form class="pure-form plex-delay-form">
+                    <b>Type</b><br/><br/>
+                    <select id="plex-delay-type">
+                        <option value="none">None</option>
+                        <option value="delay">Delay</option>
+                        <option value="tod">Time of Day</option>
+                    </select>
+                    <div id="plex-delay-type-delay" style="display: none">
+                        <br/><br/>
+                        <b>Refresh Delay</b><br/><br/>
+                        <label for="checkbox-radio-plex-delay-one" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-one" name="plexDelayRadios" value="0" checked=""> None</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-two" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-two" name="plexDelayRadios" value="5000"> 5s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-three" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-three" name="plexDelayRadios" value="15000"> 15s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-four" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-four" name="plexDelayRadios" value="30000"> 30s</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-five" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-five" name="plexDelayRadios" value="60000"> 1m</label>
+                        <br><br>
+                        <label for="checkbox-radio-plex-delay-six" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-six" name="plexDelayRadios" value="180000"> 3m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-seven" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-seven" name="plexDelayRadios" value="300000"> 5m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-eight" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-eight" name="plexDelayRadios" value="600000"> 10m</label>
+                        &nbsp;&nbsp;
+                        <label for="checkbox-radio-plex-delay-nine" class="pure-radio" style="display: inline-block">
+                            <input type="radio" id="checkbox-radio-plex-delay-nine" name="plexDelayRadios" value="900000"> 15m</label>
+                    </div>
+                    <div id="plex-delay-type-tod" style="display: none">
+                        <br/><br/>
+                        <b>Refresh at Time of Day</b><br/><br/>
+                        <select id="plex-tod-hour">
+                            <option value="1">01</option>
+                            <option value="2">02</option>
+                            <option value="3">03</option>
+                            <option value="4">04</option>
+                            <option value="5">05</option>
+                            <option value="6">06</option>
+                            <option value="7">07</option>
+                            <option value="8">08</option>
+                            <option value="9">09</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        &nbsp;&nbsp;
+                        <select id="plex-tod-min">
+                            <option value="0">00</option>
+                            <option value="1">01</option>
+                            <option value="2">02</option>
+                            <option value="3">03</option>
+                            <option value="4">04</option>
+                            <option value="5">05</option>
+                            <option value="6">06</option>
+                            <option value="7">07</option>
+                            <option value="8">08</option>
+                            <option value="9">09</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
+                            <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="29">29</option>
+                            <option value="30">30</option>
+                            <option value="31">31</option>
+                            <option value="32">32</option>
+                            <option value="33">33</option>
+                            <option value="34">34</option>
+                            <option value="35">35</option>
+                            <option value="36">36</option>
+                            <option value="37">37</option>
+                            <option value="38">38</option>
+                            <option value="39">39</option>
+                            <option value="40">40</option>
+                            <option value="41">41</option>
+                            <option value="42">42</option>
+                            <option value="43">43</option>
+                            <option value="44">44</option>
+                            <option value="45">45</option>
+                            <option value="46">46</option>
+                            <option value="47">47</option>
+                            <option value="48">48</option>
+                            <option value="49">49</option>
+                            <option value="50">50</option>
+                            <option value="51">51</option>
+                            <option value="52">52</option>
+                            <option value="53">53</option>
+                            <option value="54">54</option>
+                            <option value="55">55</option>
+                            <option value="56">56</option>
+                            <option value="57">57</option>
+                            <option value="58">58</option>
+                            <option value="59">59</option>
+                        </select>
+                        &nbsp;&nbsp;
+                        <select id="plex-tod-am-pm">
+                            <option value="AM">AM</option>
+                            <option value="PM">PM</option>
+                        </select>
+                    </div>
+                    <br/><br/>
+                    <button type="button" class="pure-button pure-button-primary edit-poster-buttons" onclick="savePlexRefreshSettings()">Save Settings</button>
+                    <button type="button" class="pure-button edit-poster-buttons" onclick="closePlexRefreshSettings()">Cancel</button>
                     <br/><br/><br/>
                </form>
             </center>
@@ -2442,6 +2579,7 @@
             var searchFolderName = ''
             var searchFolderType = ''
             var plexSettings = {}
+            var plexDelaySettings = {}
             var apiKey
             function load_api_key(skipValidation) {
                 if ($('#api-key-error-1').is(':visible'))
@@ -2642,6 +2780,13 @@
                     $.get('getSettings?pass=' + encodeURIComponent(servPass || ''), function(data) {
                         if ((data || {}).success) {
                             plexSettings = { protocol: data.plexProtocol, host: data.plexHost, port: data.plexPort, token: data.plexToken }
+                            plexDelaySettings = {
+                                plexDelayType: data.plexDelayType || 'none',
+                                plexRefreshDelay: data.plexRefreshDelay + '',
+                                plexTodHour: data.plexTodHour + '',
+                                plexTodMin: data.plexTodHour + '',
+                                plexTodAmPm: data.plexTodAmPm,
+                            }
                             if (data.webhookRadarr) {
                                 $('#webhookRadarr').val(data.webhookRadarr)
                             }
@@ -2777,6 +2922,21 @@
                             }
                         }
                     });
+                    $('#plex-delay-type').on('change', function() {
+                        $('#plex-tod-hour').val($('#plex-tod-hour option:first').val())
+                        $('#plex-tod-min').val($('#plex-tod-min option:first').val())
+                        $('#plex-tod-am-pm').val($('#plex-tod-am-pm option:first').val())
+                        $('input[name=plexDelayRadios]', '#plex-delay-type-delay').each((ij,el)=> {
+                            if ($(el).val() == '0') {
+                                $(el).prop('checked', true)
+                            } else {
+                                $(el).prop('checked', false)
+                            }
+                        })
+                        $('#plex-delay-type-delay').hide()
+                        $('#plex-delay-type-tod').hide()
+                        $('#plex-delay-type-' + $('#plex-delay-type').val()).show()
+                    })
                     $('#badge-or-label').on('change', function() {
                         resetAllBadgeValues()
                         $('#choose-label-view').hide()
@@ -3658,6 +3818,7 @@
                     $('#plex-status').html('Status: Not Connected')
                     $('#plex-connect-button').show()
                     $('#plex-settings-button').hide()
+                    $('#plex-refresh-settings-button').hide()
                     $('#plex-disconnect-button').hide()
                 })
             }
@@ -3669,6 +3830,7 @@
                         $('#plex-connect-button').hide()
                         $('#plex-disconnect-button').show()
                         $('#plex-settings-button').show()
+                        $('#plex-refresh-settings-button').show()
                         plexSettings.protocol = $('#plex-protocol').val() || 'https'
                         plexSettings.host = $('#plex-host').val() || ''
                         plexSettings.port = $('#plex-port').val() || '32400'
@@ -3694,6 +3856,53 @@
                 $('#plex-port').val((tempSettings || {}).port || plexSettings.port || '32400')
                 $('#plex-token').val((tempSettings || {}).token || plexSettings.token || '')
                 $('#plex-settings').show()
+            }
+
+            function openPlexRefreshSettings() {
+                $('#plex-delay-type').val(plexDelaySettings.plexDelayType)
+                $('input[name=plexDelayRadios]', '#plex-delay-type-delay').each((ij,el)=> {
+                    if ($(el).val() == plexDelaySettings.plexRefreshDelay + '') {
+                        $(el).prop('checked', true)
+                    } else {
+                        $(el).prop('checked', false)
+                    }
+                })
+                $('#plex-tod-hour').val(plexDelaySettings.plexTodHour)
+                $('#plex-tod-min').val(plexDelaySettings.plexTodMin)
+                $('#plex-tod-am-pm').val(plexDelaySettings.plexTodAmPm)
+                $('#plex-delay-type-delay').hide()
+                $('#plex-delay-type-tod').hide()
+                if (plexDelaySettings.plexDelayType == 'delay') {
+                    $('#plex-delay-type-delay').show()
+                } else if (plexDelaySettings.plexDelayType == 'tod') {
+                    $('#plex-delay-type-tod').show()
+                }
+                $('#plex-refresh-settings').show()
+            }
+
+            function savePlexRefreshSettings() {
+                var plexDelayType = $('#plex-delay-type').val() || 'none'
+                var plexRefreshDelay = $('input[name=plexDelayRadios]:checked', '#plex-delay-type-delay').val() || '0'
+                var plexTodHour = $('#plex-tod-hour').val() || '1'
+                var plexTodMin = $('#plex-tod-min').val() || '0'
+                var plexTodAmPm = $('#plex-tod-am-pm').val() || 'AM'
+                $.get('savePlexRefreshSettings?pass=' + encodeURIComponent(servPass || '') + '&plexDelayType=' + plexDelayType + '&plexRefreshDelay=' + plexRefreshDelay + '&plexTodHour=' + plexTodHour + '&plexTodMin=' + plexTodMin + '&plexTodAmPm=' + plexTodAmPm, function(data) {
+                    if ((data || {}).success) {
+                        plexDelaySettings.plexDelayType = plexDelayType
+                        plexDelaySettings.plexRefreshDelay = plexRefreshDelay
+                        plexDelaySettings.plexTodHour = plexTodHour
+                        plexDelaySettings.plexTodMin = plexTodMin
+                        plexDelaySettings.plexTodAmPm = plexTodAmPm
+                    }
+                    $('#plex-refresh-settings').hide()
+                })
+            }
+
+            function closePlexRefreshSettings() {
+                $('#plex-delay-type-delay').hide()
+                $('#plex-delay-type-tod').hide()
+                $('#plex-delay-type').val($('#plex-delay-type option:first').val())
+                $('#plex-refresh-settings').hide()
             }
 
             function startPlexConnection() {
@@ -3887,6 +4096,7 @@
                     $('#plex-status').html('Status: Not Connected')
                     $('#plex-connect-button').show()
                     $('#plex-settings-button').hide()
+                    $('#plex-refresh-settings-button').hide()
                     $('#plex-disconnect-button').hide()
                 }
                 // to update plex connection status
@@ -4303,12 +4513,14 @@
                         if (data.plexConnected) {
                             $('#plex-status').html('Status: <b style="color: green">Connected</b>')
                             $('#plex-settings-button').show()
+                            $('#plex-refresh-settings-button').show()
                             $('#plex-disconnect-button').show()
                             $('#plex-connect-button').hide()
                         } else {
                             $('#plex-status').html('Status: Not Connected')
                             $('#plex-connect-button').show()
                             $('#plex-settings-button').hide()
+                            $('#plex-refresh-settings-button').hide()
                             $('#plex-disconnect-button').hide()
                         }
 
