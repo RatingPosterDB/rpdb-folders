@@ -381,11 +381,11 @@ const nameQueue = async.queue((task, cb) => {
 			} else {
 				// have media file
 				reqPlex = { settings, mediaFile: task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
-				if (setting.plexDelayType == 'tod')
+				if (settings.plexDelayType == 'tod')
 					plexTodQueue.push(reqPlex)
 			}
 
-			if (reqPlex.mediaFile && setting.plexDelayType != 'tod')
+			if (reqPlex.mediaFile && settings.plexDelayType != 'tod')
 				setTimeout(() => {
 					plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
 						if (!result || !Object.keys(reqPlex).length) {
@@ -394,7 +394,7 @@ const nameQueue = async.queue((task, cb) => {
 						} else
 							logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
 					}, reqPlex.mediaFolder)
-				}, setting.plexDelayType == 'delay' ? (settings.plexRefreshDelay || 0) : 0)
+				}, settings.plexDelayType == 'delay' ? (settings.plexRefreshDelay || 0) : 0)
 		}, 1000) // 1s
 	}
 
