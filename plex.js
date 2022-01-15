@@ -51,7 +51,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 		cb(cache.movie[movieFile])
 		return
 	}
-	if (!(settings || {}).plex || !movieFile || !mediaSize) {
+	if (!(settings || {}).plex || !mediaSize) {
 		cb(false)
 		return
 	}
@@ -78,7 +78,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 						res.body.children.some(mediaEl => {
 							return mediaEl.children.some(el => {
 								if ((el || {}).name == 'Media') {
-									if ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(path.basename(movieFile))) {
+									if (!movieFile || (((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(path.basename(movieFile))) {
 										mediaObj = el
 										mediaObjParent = mediaEl
 										return true
@@ -217,6 +217,9 @@ plex.refreshByFile = (settings, file, mediaType, cb, mediaFolder) => {
 	}, mediaFolder)
 }
 
+const isVideo = (source) => { try { return !fs.lstatSync(source).isDirectory() && fileHelper.isVideo(source) } catch(e) { return false } }
+const getVideos = (source) => { try { return fs.readdirSync(source).map(name => path.join(source, name)).filter(isVideo) } catch(e) { console.error(e); return [] } }
+
 plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 	const func = mediaType == 'movie' ? 'findMovieBySize' : 'findSeriesByEpisodeSize'
 	plex[func](null, null, null, mediaIds => {
@@ -231,6 +234,39 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 				logging.log('Warning: Without the file size, we cannot match this media to Plex')
 			}
 			if (mediaSize) {
+				function plexCb(result) {
+					if (Object.keys(result || {}).length) {
+						cb(result)
+						return
+					}
+					if (mediaType == 'movie') {
+						const videos = (getVideos(path.dirname(file)) || []).filter(el => !el.includes('-trailer.'))
+						if (videos.length > 1) {
+							logging.log('Detected possible movie with multiple video files, attempting to match')
+							let sumSize = 0
+							videos.forEach(el => {
+								if (!['cd','disc','disk','dvd','part','pt'].some(part => path.basename(el).toLowerCase().includes(part)))
+									return
+								let mediaSize
+								try {
+									mediaSize = fs.statSync(el).size
+								} catch(e) {
+									logging.log('Warning: Cannot get file size for "' + file + '"')
+									logging.log('Warning: Without the file size, we cannot match this media to Plex')
+								}
+								if (!mediaSize)
+									return
+								sumSize += mediaSize
+							})
+							if (!sumSize) {
+								logging.log('Warning: Failed to match media with multiple video files')
+								cb(result)
+							} else {
+								plex[func](settings, null, sumSize, cb, mediaFolder)
+							}
+						}
+					}
+				}
 				plex[func](settings, file, mediaSize, cb, mediaFolder)
 			} else
 				cb(false)
