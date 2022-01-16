@@ -246,7 +246,7 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 							let sumSize = 0
 							videos.forEach(el => {
 								const partFileTags = ['cd','disc','disk','dvd','part','pt']
-								const isPartFile = partFileTags.some(part => !!(path.basename(el).match(new RegExp(' '+part+'[1|2|3|4]\.','gi')) || []).length)
+								const isPartFile = partFileTags.some(part => !!(path.basename(el).match(new RegExp(' '+part+'[1|2|3|4|5|6]\.','gi')) || []).length)
 								if (!isPartFile)
 									return
 								let mediaSize
