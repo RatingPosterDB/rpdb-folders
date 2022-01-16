@@ -137,6 +137,13 @@
                 margin-bottom: 10px;
                 display: inline-block;
             }
+            a.docs-link {
+                color: rgba(0,0,0,0.6);
+                text-decoration: underline;
+            }
+            a.docs-link:hover {
+                text-decoration: none;
+            }
         </style>
     </head>
     <body>
@@ -2276,9 +2283,7 @@
                         <input type="radio" id="checkbox-radio-scan-type-three" name="scanTypeRadios" value="webhook" /> Radarr / Sonarr Webhooks</label>
                 </form>
                 <div id="webhookInfo" style="display:none">
-                    <i style="opacity: 0.7">If you have a password set, you will need to also set it in the<br/>webhook settings with the username: "rpdb" (no quotes)</i>
-                    <br/><br/>
-                    <i style="opacity: 0.7">Use LAN IP with Docker (instead of "localhost")</i>
+                    <a href="https://github.com/RatingPosterDB/rpdb-folders/wiki/Radarr---Sonarr-Webhooks" target="_blank" class="docs-link">Read Webhook Documentation</a>
                     <br/><br/>
                     Radarr webhook: <input id="webhookRadarr" class="webhooks" type="text" disabled />
                     <br/><br/>
