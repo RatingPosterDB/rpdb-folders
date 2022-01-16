@@ -349,8 +349,8 @@ const nameQueue = async.queue((task, cb) => {
 					const createDate = new Date(dirStats.birthtime)
 					if (isValidDate(createDate)) {
 						const nowDate = new Date()
-						const retryMonths6 = settings.retryNewerThanMonths * 30 * 24 * 60 * 60 * 1000
-						if (createDate.getTime() < nowDate.getTime() - retryMonths6) {
+						const retryMonths = settings.retryNewerThanMonths * 30 * 24 * 60 * 60 * 1000
+						if (createDate.getTime() < nowDate.getTime() - retryMonths) {
 							if (!posterExists) {
 								logging.log(`Item skipped due to retry frequency setting, folder: ${task.name}`)
 								cb()
