@@ -266,10 +266,12 @@ plex.idsByFile = (settings, file, mediaType, cb, mediaFolder) => {
 							} else {
 								plex[func](settings, null, sumSize, cb, mediaFolder)
 							}
+							return
 						}
 					}
+					cb(result)
 				}
-				plex[func](settings, file, mediaSize, cb, mediaFolder)
+				plex[func](settings, file, mediaSize, plexCb, mediaFolder)
 			} else
 				cb(false)
 		}
