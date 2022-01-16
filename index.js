@@ -694,6 +694,7 @@ nameQueue.drain(() => {
 			const thisMonth = d.getMonth() + 1
 			const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
 			if (settings.lastRetryMonth == -1 || validRetryPeriod) {
+				settings.lastRetryMonth = thisMonth
 				config.set('lastRetryMonth', thisMonth)
 			}
 		}
