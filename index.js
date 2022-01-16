@@ -334,7 +334,7 @@ const nameQueue = async.queue((task, cb) => {
 
 	let blockBackdrop = false
 
-	if (fullScanRunning && settings.retryFrequency) {
+	if ((fullScanRunning || isFolderScanRunning) && settings.retryFrequency) {
 
 		if (!posterExists || (posterExists && !backdropExists)) {
 			const d = new Date()
@@ -718,6 +718,7 @@ nameQueue.drain(() => {
 		}
 	}
 	fullScanRunning = false
+	isFolderScanRunning = false
 	queueDisabled = false
 	avoidOptimizedBackdropsScan = false
 	config.set('unmatched', settings.unmatched)
@@ -731,8 +732,9 @@ const getVideos = (source) => { try { return fs.readdirSync(source).map(name => 
 
 
 let fullScanRunning = false
+let isFolderScanRunning = false
 
-function startFetchingPosters(theseFolders, type, forced, avoidYearMatch) {
+function startFetchingPosters(theseFolders, type, forced, avoidYearMatch, isFolderScan) {
 	let allFolders = []
 	theseFolders.forEach(mediaFolder => {
 		const subFolders = getDirectories(mediaFolder)
@@ -752,7 +754,10 @@ function startFetchingPosters(theseFolders, type, forced, avoidYearMatch) {
 		}
 	})
 	if (allFolders.length) {
-		fullScanRunning = true
+		if (!isFolderScan)
+			fullScanRunning = true
+		else
+			isFolderScanRunning = true
 		allFolders.forEach((el) => { if (!el) return; const name = el.split(path.sep).pop(); nameQueue.push({ name, folder: el, type, forced, avoidYearMatch }) })
 	}
 }
@@ -1632,7 +1637,7 @@ app.get(baseUrl+'runFullScan', (req, res) => passwordValid(req, res, (req, res) 
 			const idx = settings.mediaFolders[req.query.type].indexOf(req.query.folder)
 			if (idx !== -1) {
 				const overwrite = shouldOverwrite(req.query.type)
-				startFetchingPosters([req.query.folder], req.query.type, overwrite)
+				startFetchingPosters([req.query.folder], req.query.type, overwrite, false, true)
 				res.send({ success: true })
 				return
 			}
@@ -1670,7 +1675,7 @@ app.get(baseUrl+'forceOverwriteScan', (req, res) => passwordValid(req, res, (req
 	if (((req || {}).query || {}).folder && req.query.type) {
 		const idx = settings.mediaFolders[req.query.type].indexOf(req.query.folder)
 		if (idx !== -1) {
-			startFetchingPosters([req.query.folder], req.query.type, true, true)
+			startFetchingPosters([req.query.folder], req.query.type, true, true, true)
 			res.send({ success: true })
 			return
 		}
