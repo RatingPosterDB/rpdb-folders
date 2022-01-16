@@ -332,29 +332,41 @@ const nameQueue = async.queue((task, cb) => {
 		backdropExists = fs.existsSync(path.join(targetFolder, backdropName))
 	}
 
-	if (fullScanRunning && !posterExists && settings.retryFrequency) {
-		const d = new Date()
-		const thisMonth = d.getMonth() + 1
-		const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
-		if (settings.lastRetryMonth == -1 || validRetryPeriod) {
-			// do nothing, this is a valid retry period
-		} else {
-			const dirStats = fs.statSync(parentMediaFolder)
-			if ((dirStats || {}).birthtime) {
-				function isValidDate(d) { return d instanceof Date && !isNaN(d) }
-				const createDate = new Date(dirStats.birthtime)
-				if (isValidDate(createDate)) {
-					const nowDate = new Date()
-					const retryMonths6 = 6 * 30 * 24 * 60 * 60 * 1000
-					if (createDate.getTime() < nowDate.getTime() - retryMonths6) {
-						logging.log(`Skipping due to retry frequency setting, folder: ${task.name}`)
-						cb()
-						return
+	let blockBackdrop = false
+
+	if (fullScanRunning && settings.retryFrequency) {
+
+		if (!posterExists || (posterExists && !backdropExists)) {
+			const d = new Date()
+			const thisMonth = d.getMonth() + 1
+			const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
+			if (settings.lastRetryMonth == -1 || validRetryPeriod) {
+				// do nothing, this is a valid retry period
+			} else {
+				const dirStats = fs.statSync(targetFolder)
+				if ((dirStats || {}).birthtime) {
+					function isValidDate(d) { return d instanceof Date && !isNaN(d) }
+					const createDate = new Date(dirStats.birthtime)
+					if (isValidDate(createDate)) {
+						const nowDate = new Date()
+						const retryMonths6 = settings.retryNewerThanMonths * 30 * 24 * 60 * 60 * 1000
+						if (createDate.getTime() < nowDate.getTime() - retryMonths6) {
+							if (!posterExists) {
+								logging.log(`Item skipped due to retry frequency setting, folder: ${task.name}`)
+								cb()
+								return
+							} else if (!backdropExists) {
+								logging.log(`Backdrop skipped due to retry frequency setting, folder: ${task.name}`)
+								blockBackdrop = true
+							}
+						}
 					}
 				}
 			}
 		}
+
 	}
+
 
 	let noSkip = false
 	if (posterExists && !task.forced) {
@@ -394,6 +406,9 @@ const nameQueue = async.queue((task, cb) => {
 		once = true
 		setTimeout(() => {
 			cb()
+
+			if (!plex.hasAllSettings(settings))
+				return
 
 			if (!plexMediaFile)
 				plexMediaFile = getVideoFile(task)
@@ -490,7 +505,7 @@ const nameQueue = async.queue((task, cb) => {
 	}
 
 	function getBackdrop(imdbId) {
-		if (backdropExists && !task.forced) {
+		if (blockBackdrop || (backdropExists && !task.forced)) {
 			endIt()
 			return
 		}
@@ -524,7 +539,7 @@ const nameQueue = async.queue((task, cb) => {
 		function retrievePosters() {
 			getPoster(imdbId)
 			if (settings.backdrops) {
-				if (avoidOptimizedBackdropsScan) {
+				if (settings.retryFrequency || avoidOptimizedBackdropsScan) {
 					getBackdrop(imdbId)
 				} else {
 					let noBackdrop = false
@@ -613,7 +628,8 @@ const nameQueue = async.queue((task, cb) => {
 		let reqPlex = {}
 
 		if (task.type == 'movie' && !task.isFile && !plexMediaFile) {
-			logging.log('Warning: Could not find any video file for the movie in order to probe')
+			if (settings.autoBadges[parentMediaFolder] || plex.hasAllSettings(settings))
+				logging.log('Warning: Could not find any video file for the movie in order to probe')
 		} else {
 			// have media file
 			reqPlex = { settings, mediaFile: task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
@@ -1133,6 +1149,11 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.retryFrequency = retryFrequency
 		config.set('retryFrequency', settings.retryFrequency)
 	}
+	const retryNewerThanMonths = parseInt((req.query || {}).retryNewerThanMonths || '6')
+	if (retryNewerThanMonths !== settings.retryNewerThanMonths) {
+		settings.retryNewerThanMonths = retryNewerThanMonths
+		config.set('retryNewerThanMonths', settings.retryNewerThanMonths)
+	}
 	const overwritePeriod = (req.query || {}).overwritePeriod || 'overwrite-monthly'
 	settings.minOverwritePeriod = overwritePeriod == 'overwrite-monthly' ? 29 * 24 * 60 * 60 * 1000 : 14 * 24 * 60 * 60 * 1000
 	config.set('minOverwritePeriod', settings.minOverwritePeriod)
@@ -1290,6 +1311,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		plexTodMin: settings.plexTodMin,
 		plexTodAmPm: settings.plexTodAmPm,
 		retryFrequency: settings.retryFrequency,
+		retryNewerThanMonths: settings.retryNewerThanMonths,
 	})
 }))
 

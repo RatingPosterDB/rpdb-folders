@@ -2224,9 +2224,24 @@
                         <input type="radio" id="checkbox-radio-overwrite-two" name="overwriteRadios" value="overwrite-bimonthly" /> Bimonthly</label>
                 </form>
                 <br/><br/>
-                <b>Retry Frequency</b><br/><br/>
-                <div>
-                    <i style="opacity: 0.7">How often to retry fetching posters for older media.</i>
+                <b>Retry Options</b><br/><br/>
+                <div style="opacity: 0.85">
+                    Always retry to fetch images for folders newer than:
+                    <br/><br/>
+                </div>
+                <form class="pure-form pure-form-aligned" id="retrymon-opts-form">
+                    <label for="checkbox-radio-retrymon-one" class="pure-radio" style="display: inline-block">
+                        <input type="radio" id="checkbox-radio-retrymon-one" name="retrymonRadios" value="retrymon-3" /> 3 months</label>
+                    &nbsp;&nbsp;
+                    <label for="checkbox-radio-retrymon-two" class="pure-radio" style="display: inline-block">
+                        <input type="radio" id="checkbox-radio-retrymon-two" name="retrymonRadios" value="retrymon-6" checked="" /> 6 months</label>
+                    &nbsp;&nbsp;
+                    <label for="checkbox-radio-retrymon-three" class="pure-radio" style="display: inline-block">
+                        <input type="radio" id="checkbox-radio-retrymon-three" name="retrymonRadios" value="retrymon-9" /> 9 months</label>
+                </form>
+                <br/>
+                <div style="opacity: 0.85">
+                    For older folders, the retry frequency should be:
                     <br/><br/>
                 </div>
                 <form class="pure-form pure-form-aligned" id="retry-opts-form">
@@ -2706,6 +2721,7 @@
                 var seriesPosterType =$('input[name=seriesOptionsRadios]:checked', '#poster-type-opts-form').val();
                 var overwritePeriod = $('input[name=overwriteRadios]:checked', '#overwrite-opts-form').val();
                 var retryFrequency = $('input[name=retryRadios]:checked', '#retry-opts-form').val().replace('retry-', '');
+                var retryNewerThanMonths = $('input[name=retrymonRadios]:checked', '#retrymon-opts-form').val().replace('retrymon-', '');
                 var overwrite = 0;
                 if ($("#overwrite-option-one").is(':checked')) {
                   overwrite = 1;
@@ -2752,7 +2768,7 @@
                 var webhookDelay = $('input[name=webhookDelayRadios]:checked', '#webhook-delay-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&retryFrequency=' + retryFrequency + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&plexProtocol=' + plexSettings.protocol + '&plexHost=' + plexSettings.host + '&plexPort=' + plexSettings.port + '&plexToken=' + plexSettings.token + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&retryFrequency=' + retryFrequency + '&retryNewerThanMonths=' + retryNewerThanMonths + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&plexProtocol=' + plexSettings.protocol + '&plexHost=' + plexSettings.host + '&plexPort=' + plexSettings.port + '&plexToken=' + plexSettings.token + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -2886,6 +2902,15 @@
                             if (data.retryFrequency) {
                                 $('input[name=retryRadios]', '#retry-opts-form').each((ij,el)=> {
                                     if ($(el).val() == 'retry-' + data.retryFrequency) {
+                                        $(el).prop('checked', true)
+                                    } else {
+                                        $(el).prop('checked', false)
+                                    }
+                                })
+                            }
+                            if (data.retryNewerThanMonths) {
+                                $('input[name=retrymonRadios]', '#retrymon-opts-form').each((ij,el)=> {
+                                    if ($(el).val() == 'retrymon-' + data.retryNewerThanMonths) {
                                         $(el).prop('checked', true)
                                     } else {
                                         $(el).prop('checked', false)
@@ -3061,6 +3086,9 @@
                         updateSettings();
                     });
                     $('#retry-opts-form input').on('change', function() {
+                        updateSettings();
+                    });
+                    $('#retrymon-opts-form input').on('change', function() {
                         updateSettings();
                     });
                     $("#no-empty-folders").on('change', function() {
