@@ -61,13 +61,17 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 			let libCount = libKeys.length
 			let libRespond = false
 			function libEnd(mediaIds) {
+				if (libRespond) return
 				if (mediaIds) {
 					libRespond = true
 					cb(mediaIds)
+					return
 				}
 				libCount--
-				if (!libCount && !libRespond)
+				if (!libCount) {
+					libRespond = true
 					cb(false)
+				}
 			}
 			libKeys.forEach(libKey => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
@@ -131,13 +135,17 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 			let libCount = libKeys.length
 			let libRespond = false
 			function libEnd(mediaIds) {
+				if (libRespond) return
 				if (mediaIds) {
 					libRespond = true
 					cb(mediaIds)
+					return
 				}
 				libCount--
-				if (!libCount && !libRespond)
+				if (!libCount) {
+					libRespond = true
 					cb(false)
+				}
 			}
 			libKeys.forEach(libKey => {
 			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
