@@ -337,8 +337,10 @@ const nameQueue = async.queue((task, cb) => {
 		const thisMonth = d.getMonth() + 1
 		const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
 		if (settings.lastRetryMonth == -1 || validRetryPeriod) {
+			// do nothing, this is a valid retry period
+		} else {
 			const dirStats = fs.statSync(parentMediaFolder)
-			if (dirStats.birthtime) {
+			if ((dirStats || {}).birthtime) {
 				function isValidDate(d) { return d instanceof Date && !isNaN(d) }
 				const createDate = new Date(dirStats.birthtime)
 				if (isValidDate(createDate)) {
