@@ -332,6 +332,28 @@ const nameQueue = async.queue((task, cb) => {
 		backdropExists = fs.existsSync(path.join(targetFolder, backdropName))
 	}
 
+	if (fullScanRunning && !posterExists && settings.retryFrequency) {
+		const d = new Date()
+		const thisMonth = d.getMonth() + 1
+		const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
+		if (settings.lastRetryMonth == -1 || validRetryPeriod) {
+			const dirStats = fs.statSync(parentMediaFolder)
+			if (dirStats.birthtime) {
+				function isValidDate(d) { return d instanceof Date && !isNaN(d) }
+				const createDate = new Date(dirStats.birthtime)
+				if (isValidDate(createDate)) {
+					const nowDate = new Date()
+					const retryMonths6 = 6 * 30 * 24 * 60 * 60 * 1000
+					if (createDate.getTime() < nowDate.getTime() - retryMonths6) {
+						logging.log(`Skipping due to retry frequency setting, folder: ${task.name}`)
+						cb()
+						return
+					}
+				}
+			}
+		}
+	}
+
 	let noSkip = false
 	if (posterExists && !task.forced) {
 		const folderAutoBadgeData = settings.autoBadges[parentMediaFolder]
@@ -666,6 +688,16 @@ const nameQueue = async.queue((task, cb) => {
 
 nameQueue.drain(() => {
 	config.set('imdbCache', settings.imdbCache)
+	if (fullScanRunning) {
+		if (settings.retryFrequency) {
+			const d = new Date()
+			const thisMonth = d.getMonth() + 1
+			const validRetryPeriod = thisMonth < settings.lastRetryMonth ? (settings.lastRetryMonth + settings.retryFrequency < thisMonth + 12) : (settings.lastRetryMonth + settings.retryFrequency < thisMonth)
+			if (settings.lastRetryMonth == -1 || validRetryPeriod) {
+				config.set('lastRetryMonth', thisMonth)
+			}
+		}
+	}
 	fullScanRunning = false
 	queueDisabled = false
 	avoidOptimizedBackdropsScan = false
@@ -1088,6 +1120,11 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.posterLang = { movie: moviePosterLang, series: seriesPosterLang }
 		config.set('posterLang', settings.posterLang)
 	}
+	const retryFrequency = parseInt((req.query || {}).retryFrequency || '0')
+	if (retryFrequency !== settings.retryFrequency) {
+		settings.retryFrequency = retryFrequency
+		config.set('retryFrequency', settings.retryFrequency)
+	}
 	const overwritePeriod = (req.query || {}).overwritePeriod || 'overwrite-monthly'
 	settings.minOverwritePeriod = overwritePeriod == 'overwrite-monthly' ? 29 * 24 * 60 * 60 * 1000 : 14 * 24 * 60 * 60 * 1000
 	config.set('minOverwritePeriod', settings.minOverwritePeriod)
@@ -1244,6 +1281,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		plexTodHour: settings.plexTodHour,
 		plexTodMin: settings.plexTodMin,
 		plexTodAmPm: settings.plexTodAmPm,
+		retryFrequency: settings.retryFrequency,
 	})
 }))
 

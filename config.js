@@ -78,6 +78,8 @@ let map = {
     },
     useWebhook: false,
     webhookDelay: 0,
+    retryFrequency: 0,
+    lastRetryMonth: -1,
 }
 
 function loadUserConfig(err, obj) {
