@@ -5,7 +5,7 @@ const tmdbKey = require('../tmdbKey').key
 
 module.exports = {
 	tvdbToImdb: (tvdbId, cb) => {
-		needle.get('https://api.themoviedb.org/3/find/'+tvdbId+'?api_key='+tmdbKey+'&language=en-US&external_source=tvdb_id', (err, resp, body) => {
+		needle.get('https://api.themoviedb.org/3/find/'+tvdbId+'?api_key='+tmdbKey+'&language=en-US&external_source=tvdb_id', { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 			if (!err && (resp || {}).statusCode == 200 && (((body || {})['tv_results'] || [])[0] || {}).id) {
 				tmdbMatching.tmdbToImdb(body['tv_results'][0].id, 'tv', cb)
 			} else {

@@ -407,7 +407,7 @@ const nameQueue = async.queue((task, cb) => {
 		setTimeout(() => {
 			cb()
 
-			if (!plex.hasAllSettings(settings))
+			if (!plex.connected)
 				return
 
 			if (!plexMediaFile)
@@ -467,7 +467,7 @@ const nameQueue = async.queue((task, cb) => {
 
 		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos, badgeSize)
 
-		needle.get(posterUrl, (err, res) => {
+		needle.get(posterUrl, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
 				fs.writeFile(path.join(targetFolder, posterName), res.raw, (err) => {
 					if (err) {
@@ -510,7 +510,7 @@ const nameQueue = async.queue((task, cb) => {
 			return
 		}
 		const backdropUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/backdrop-default/' + imdbId + '.jpg'
-		needle.get(backdropUrl, (err, res) => {
+		needle.get(backdropUrl, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
 				fs.writeFile(path.join(targetFolder, backdropName), res.raw, (err) => {
 					if (err) {
@@ -628,7 +628,7 @@ const nameQueue = async.queue((task, cb) => {
 		let reqPlex = {}
 
 		if (task.type == 'movie' && !task.isFile && !plexMediaFile) {
-			if (settings.autoBadges[parentMediaFolder] || plex.hasAllSettings(settings))
+			if (settings.autoBadges[parentMediaFolder] || plex.connected)
 				logging.log('Warning: Could not find any video file for the movie in order to probe')
 		} else {
 			// have media file
@@ -993,7 +993,7 @@ function init() {
 
 function validateApiKey() {
 	return new Promise((resolve, reject) => {
-		needle.get('https://api.ratingposterdb.com/' + settings.apiKey + '/isValid', (err, resp, body) => {
+		needle.get('https://api.ratingposterdb.com/' + settings.apiKey + '/isValid', { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 			if (!err && (resp || {}).statusCode == 200) {
 				init()
 				resolve()
@@ -1726,7 +1726,7 @@ app.get(baseUrl+'needsUpdate', (req, res) => {
 
 	let updateRequired = false
 
-	needle.get('https://api.github.com/repositories/340865291/releases', (err, resp, body) => {
+	needle.get('https://api.github.com/repositories/340865291/releases', { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 		if (body && Array.isArray(body) && body.length) {
 			const tag = body[0].tag_name
 			if (semver.compare(pkgVersion, tag) === -1) {
@@ -1810,7 +1810,7 @@ app.get(baseUrl+'poster', (req, res) => passwordValid(req, res, (req, res) => {
 	}
 	function pipePoster(imdbId) {
 		const posterUrl = posterFromImdbId(imdbId, mediaType)
-		needle.get(posterUrl).pipe(res)
+		needle.get(posterUrl, { response_timeout: 15000, read_timeout: 15000 }).pipe(res)
 	}
 	folderNameToImdb(mediaName, mediaType, imdbId => {
 		if (imdbId)
@@ -1848,7 +1848,7 @@ app.get(baseUrl+'preview', (req, res) => passwordValid(req, res, (req, res) => {
 		queryString += 'badgeSize=' + mediaBadgeSize
 	}
 	const posterUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/poster-default/' + mediaImdb + '.jpg' + queryString
-	needle.get(posterUrl).pipe(res)
+	needle.get(posterUrl, { response_timeout: 15000, read_timeout: 15000 }).pipe(res)
 }))
 
 function extendedDataCreatePoster(imdbId, imdbType, tmdbId, tmdbType, posterImage, cb) {
@@ -1896,7 +1896,7 @@ app.get(baseUrl+'create-preview', (req, res) => passwordValid(req, res, (req, re
 
 	extendedDataCreatePoster(imdbId, req.query.mediaType, tmdbId, tmdbType, posterImage, (imdbId, posterImage) => {
 		const posterUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/' + req.query.posterType + '/create-poster/' + imdbId + '.jpg?ratings=' + req.query.ratings + (!req.query.img && posterImage ? '&img=' + encodeURIComponent(posterImage) : '') + (req.query.extras ? '&' + req.query.extras : '')
-		needle.get(posterUrl).pipe(res)
+		needle.get(posterUrl, { response_timeout: 15000, read_timeout: 15000 }).pipe(res)
 	})
 }))
 
@@ -1953,7 +1953,7 @@ app.get(baseUrl+'submit-poster', (req, res) => passwordValid(req, res, (req, res
 		let buff = Buffer.from(submitStr)
 		let submitData = buff.toString('base64')
 		const submitUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/submit?imageType=' + req.query.posterType + '&data=' + encodeURIComponent(submitData)
-		needle.get(submitUrl, (err, resp, body) => {
+		needle.get(submitUrl, { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 			res.setHeader('Content-Type', 'application/json')
 			res.send({ success: true })
 		})
@@ -1962,7 +1962,7 @@ app.get(baseUrl+'submit-poster', (req, res) => passwordValid(req, res, (req, res
 
 app.get(baseUrl+'checkRequests', (req, res) => passwordValid(req, res, (req, res) => {
 	res.setHeader('Content-Type', 'application/json')
-	needle.get('https://api.ratingposterdb.com/' + settings.apiKey + '/requests?break=' + Date.now(), (err, resp, body) => {
+	needle.get('https://api.ratingposterdb.com/' + settings.apiKey + '/requests?break=' + Date.now(), { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 		if ((body || {}).limit) {
 			body.success = true
 			res.send(body)
@@ -1990,10 +1990,10 @@ app.get(baseUrl+'poster-choices', (req, res) => passwordValid(req, res, (req, re
 	folderNameToImdb(mediaName, mediaType, imdbId => {
 		if (imdbId) {
 			const tmdbType = mediaType == 'movie' ? mediaType : 'tv'
-			needle.get('https://api.themoviedb.org/3/find/'+imdbId+'?api_key='+tmdbKey+'&language=en-US&external_source=imdb_id', (err, resp, body) => {
+			needle.get('https://api.themoviedb.org/3/find/'+imdbId+'?api_key='+tmdbKey+'&language=en-US&external_source=imdb_id', { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 				if (!err && (resp || {}).statusCode == 200 && (((body || {})[tmdbType + '_results'] || [])[0] || {}).id) {
 					const tmdbId = body[tmdbType + '_results'][0].id
-					needle.get('https://api.themoviedb.org/3/'+tmdbType+'/'+tmdbId+'/images?api_key='+tmdbKey, (err, resp, body) => {
+					needle.get('https://api.themoviedb.org/3/'+tmdbType+'/'+tmdbId+'/images?api_key='+tmdbKey, { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 						if (((body || {}).posters || []).length) {
 							res.setHeader('Content-Type', 'application/json')
 							res.send({ items: body.posters.map(el => { return { file_path: el.file_path, lang: el['iso_639_1'] ? ISO6391.getName(el['iso_639_1']) : null } }) })
@@ -2368,7 +2368,7 @@ setTimeout(async () => {
 		}
 		let remoteSuccess = false
 		const remoteCommandsQueue = async.queue((task, cb) => {
-			needle.get(task.url, (err, res) => {
+			needle.get(task.url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 				if (!err && (res || {}).statusCode == 200) {
 					remoteSuccess = true // at least one valid success
 				}

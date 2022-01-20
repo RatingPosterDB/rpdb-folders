@@ -5,7 +5,7 @@ const stringHelper = require('../strings')
 const tmdbKey = require('../tmdbKey').key
 
 function tmdbToImdb(tmdbId, tmdbType, cb) {
-	needle.get('https://api.themoviedb.org/3/' + tmdbType + '/' + tmdbId + '?api_key=' + tmdbKey + '&append_to_response=external_ids', (err, resp, body) => {
+	needle.get('https://api.themoviedb.org/3/' + tmdbType + '/' + tmdbId + '?api_key=' + tmdbKey + '&append_to_response=external_ids', { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 		if (((body || {}).external_ids || {}).imdb_id) {
 			cb(body.external_ids.imdb_id, body.poster_path)
 		} else cb(false)
@@ -18,7 +18,7 @@ function folderNameFromTMDBtoImdb(obj, cb) {
 		name: obj.name,
 		year: obj.year,
 	}
-	needle.get('https://api.themoviedb.org/3/search/' + tmdbObj.type + '?api_key=' + tmdbKey + '&query=' + encodeURIComponent(tmdbObj.name) + '&include_adult=false' + (tmdbObj.year ? '&' + (tmdbObj.type == 'movie' ? 'year' : 'first_air_date_year') + '=' + tmdbObj.year : ''), (err, resp, body) => {
+	needle.get('https://api.themoviedb.org/3/search/' + tmdbObj.type + '?api_key=' + tmdbKey + '&query=' + encodeURIComponent(tmdbObj.name) + '&include_adult=false' + (tmdbObj.year ? '&' + (tmdbObj.type == 'movie' ? 'year' : 'first_air_date_year') + '=' + tmdbObj.year : ''), { response_timeout: 15000, read_timeout: 15000 }, (err, resp, body) => {
 		let shouldAcceptResult = !!(tmdbObj.year && (((body || {}).results || [])[0] || {}).id)
 		if (!shouldAcceptResult && !tmdbObj.year)
 			shouldAcceptResult = !!(

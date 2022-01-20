@@ -46,10 +46,6 @@ plex.testConnection = (settings, cb) => {
 	})
 }
 
-plex.hasAllSettings = (settings) => {
-	return (settings.plex.protocol && settings.plex.host && settings.plex.port && settings.plex.token)
-}
-
 plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 	if (movieFile && cache.movie[movieFile]) {
 		cb(cache.movie[movieFile])
@@ -363,15 +359,14 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 }
 
 plex.pollForIdsByFile = async (settings, file, mediaType, cb, mediaFolder) => {
-	if (!((settings || {}).plex || {}).token) {
+	if (!((settings || {}).plex || {}).token || !plex.connected) {
 		cb(false)
 		return
 	}
 	if (mediaType == 'series') {
 		const episodeFile = await getSeriesFile(mediaType, file)
 		if (!episodeFile) {
-			if (plex.hasAllSettings(settings))
-				logging.log('Warning: Could not find any video file for the series in order to refresh metadata in Plex.')
+			logging.log('Warning: Could not find any video file for the series in order to refresh metadata in Plex.')
 			cb(false)
 			return
 		} else
