@@ -420,20 +420,13 @@ const nameQueue = async.queue((task, cb) => {
 			} else {
 				// have media file
 				reqPlex = { settings, mediaFile: task.type == 'series' ? task.folder : task.isFile ? path.join(task.folder, task.name) : plexMediaFile, type: task.type, mediaFolder: parentMediaFolder }
-				if (reqPlex.mediaFile && settings.plexDelayType == 'tod')
-					plexTodQueue.push(reqPlex)
+				if (reqPlex.mediaFile) {
+					if (settings.plexDelayType == 'tod')
+						plexPreQueue.push(reqPlex)
+					else
+						plexRefreshQueue.push(reqPlex)
+				}
 			}
-
-			if (reqPlex.mediaFile && settings.plexDelayType != 'tod')
-				setTimeout(() => {
-					plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-						if (!result || !Object.keys(reqPlex).length) {
-							if (((settings || {}).plex || {}).token)
-								logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
-						} else
-							logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
-					}, reqPlex.mediaFolder)
-				}, settings.plexDelayType == 'delay' ? (settings.plexRefreshDelay || 0) : 0)
 		}, 1000) // 1s
 	}
 
@@ -716,6 +709,13 @@ nameQueue.drain(() => {
 				config.set('lastRetryMonth', thisMonth)
 			}
 		}
+	}
+	if (plex.connected && plexPreQueue.length) {
+		if (settings.plexDelayType == 'tod')
+			plexTodQueue = plexPreQueue
+		else
+			startPlexQueue(plexPreQueue)
+		plexPreQueue = []
 	}
 	fullScanRunning = false
 	isFolderScanRunning = false
@@ -1055,39 +1055,70 @@ let plexTodTimeout = false
 
 let plexTodQueue = []
 
-const plexTodRefreshQueue = async.queue((task, cb) => {
-	const reqPlex = task
-	plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-		if (!result || !Object.keys(reqPlex).length) {
-			if (((settings || {}).plex || {}).token)
-				logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
-		} else
-			logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
-		setTimeout(() => {
-			cb()
-		}, 1000)
-	}, reqPlex.mediaFolder)
+let plexPreQueue = []
+
+const plexRefreshQueue = async.queue((task, cb) => {
+
+	let once = false
+
+	function doneOnce() {
+		plexRefreshLimit = false
+		if (!once) { once = true; cb() }
+	}
+
+	function handlePlexRefresh() {
+
+		let plexRefreshLimit = setTimeout(doneOnce, 30 * 1000)
+
+		const reqPlex = task
+
+		plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
+			if (plexRefreshLimit) clearTimeout(plexRefreshLimit)
+			if (!result || !Object.keys(reqPlex).length) {
+				if (((settings || {}).plex || {}).token)
+					logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
+			} else
+				logging.log('Refreshed metadata in Plex for "' + reqPlex.mediaFile + '"')
+			setTimeout(() => { doneOnce() }, 1000)
+		}, reqPlex.mediaFolder)
+	}
+
+	const plexDelay = settings.plexDelayType == 'delay' ? (settings.plexRefreshDelay || 0) : 0
+
+	if (plexDelay) setTimeout(handlePlexRefresh, plexDelay)
+	else handlePlexRefresh()
+
 }, 1)
 
+function startPlexQueue(items) {
+	if (items.length) {
+		logging.log('Starting metadata refresh for items in Plex, items queued: ' + items.length)
+		let plexTodDups = []
+		items.forEach(el => {
+			if (!plexTodDups.includes(el.mediaFile)) {
+				plexTodDups.push(el.mediaFile)
+				plexRefreshQueue.push(el)
+			}
+		})
+		plexTodDups = null
+	}
+}
+
 function setPlexTodUpdate() {
+	if (plexTodTimeout) {
+		clearTimeout(plexTodTimeout)
+		plexTodTimeout = false
+	}
 	if (settings.plexDelayType == 'tod') {
 		const now = new Date()
-		let millisTillTrigger = new Date(now.getFullYear(), now.getMonth(), now.getDate(), settings.plexTodHour + (settings.plexTodAmPm == 'PM' ? 12 : 0), settings.plexTodMin, 0, 0)
+		let dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), settings.plexTodHour + (settings.plexTodAmPm == 'PM' ? 12 : 0), settings.plexTodMin, 0, 0)
+		let millisTillTrigger = dt.getTime() - now.getTime()
 		if (millisTillTrigger < 0)
 			millisTillTrigger += 86400000 // after target time, set for tomorrow
 		plexTodTimeout = setTimeout(() => {
-			if (plexTodQueue.length) {
-				logging.log('Starting metadata refresh for items in Plex, items queued: ' + plexTodQueue.length)
-				let plexTodDups = []
-				plexTodQueue.forEach(el => {
-					if (!plexTodDups.includes(el.mediaFile)) {
-						plexTodDups.push(el.mediaFile)
-						plexTodRefreshQueue.push(el)
-					}
-				})
-				plexTodQueue = []
-				plexTodDups = null
-			}
+			plexTodTimeout = false
+			startPlexQueue(plexTodQueue)
+			plexTodQueue = []
 			setTimeout(() => {
 				setPlexTodUpdate()
 			}, 61 * 1000)
@@ -1096,10 +1127,6 @@ function setPlexTodUpdate() {
 }
 
 app.get(baseUrl+'savePlexRefreshSettings', (req, res) => passwordValid(req, res, (req, res) => {
-	if (plexTodTimeout) {
-		clearTimeout(plexTodTimeout)
-		plexTodTimeout = false
-	}
 	let plexDelayType = (req.query || {}).plexDelayType || 'none'
 	if (plexDelayType == 'none')
 		plexDelayType = false

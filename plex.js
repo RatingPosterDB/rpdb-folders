@@ -18,7 +18,7 @@ plex.getLibraries = (settings, type, cb) => {
 	if (settings.plex.protocol && settings.plex.host && settings.plex.port && settings.plex.token) {
 		const plexType = type ? type == 'series' ? 'show' : 'movie' : false
 		const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-		needle.get(url, (err, res) => {
+		needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((res.body || {}).children || []).length) {
 				plex.connected = true
 				let libsByType = []
@@ -75,11 +75,11 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 					cb(false)
 				}
 			}
-			libKeys.forEach(libKey => {
-				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				needle.get(url, (err, res) => {
+			const libKeysQueue = async.queue((task, taskCb) => {
+				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
-						logging.log('Library search succeeded for key: ' + libKey)
+						logging.log('Library search succeeded for key: ' + task.libKey)
 						plex.connected = true
 						let mediaObj = false
 						res.body.children.some(mediaEl => {
@@ -116,15 +116,18 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 							libEnd()
 						}
 					} else {
-						logging.log('Failed searching library with key: ' + libKey)
+						logging.log('Failed searching library with key: ' + task.libKey)
 						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
-							logging.log('No search results in library with key: ' + libKey + ' for filesize: ' + mediaSize)
+							logging.log('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
 						if (err)
 							console.log(err)
 						libEnd()
 					}
+					taskCb()
 				})
-			})
+			}, 1)
+
+			libKeys.forEach(libKey => { libKeysQueue.push({ libKey }) })
 		} else {
 			cb(false)
 		}
@@ -160,7 +163,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 			}
 			libKeys.forEach(libKey => {
 			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				needle.get(url, (err, res) => {
+				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
 						plex.connected = true
 						const foundMedia = res.body.children.some(mediaEl => {
@@ -169,7 +172,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 									if ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(path.basename(episodeFile))) {
 										if ((mediaEl.attributes || {}).grandparentKey) {
 										 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + mediaEl.attributes.grandparentKey + '?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-											needle.get(url, (err, res) => {
+											needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 												if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
 													const mediaObjParent = res.body.children[0]
 													const mediaIds = { plex: mediaEl.attributes.grandparentKey.split('/').pop() }
@@ -213,7 +216,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 plex.refreshById = (settings, mediaIds, cb) => {
 	if (settings.plex.protocol && settings.plex.host && settings.plex.port && settings.plex.token && (mediaIds || {}).plex) {
 		const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/metadata/' + mediaIds.plex + '/refresh'
-		needle.put(url, null, { headers: {  'X-Plex-Product': rpdbAppName, 'X-Plex-Client-Identifier': rpdbAppId, 'X-Plex-Token': settings.plex.token, origin: 'https://app.plex.tv', referer: 'https://app.plex.tv/' } }, (err, res) => {
+		needle.put(url, { response_timeout: 15000, read_timeout: 15000 }, { headers: {  'X-Plex-Product': rpdbAppName, 'X-Plex-Client-Identifier': rpdbAppId, 'X-Plex-Token': settings.plex.token, origin: 'https://app.plex.tv', referer: 'https://app.plex.tv/' } }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
 				plex.connected = true
 				cb(true)
