@@ -55,11 +55,10 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 		cb(false)
 		return
 	}
-	logging.log('Searching for movie in Plex by filesize: ' + mediaSize)
 	plex.getLibraries(settings, 'movie', libsByType => {
 		let libKeysLogs = []
 		let clearLibKeysLogs = []
-		libKeysLogs.push('Number of libraries to searched: ' + (libsByType || []).length)
+		libKeysLogs.push('Number of libraries to search: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
@@ -156,13 +155,18 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 		return
 	}
 	plex.getLibraries(settings, 'series', libsByType => {
+		let libKeysLogs = []
+		let clearLibKeysLogs = []
+		libKeysLogs.push('Number of libraries to search: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
 			let libRespond = false
+			let foundMediaIds = false
 			function libEnd(mediaIds) {
 				if (libRespond) return
 				if (mediaIds) {
+					foundMediaIds = true
 					libRespond = true
 					cb(mediaIds)
 					return
@@ -173,8 +177,8 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 					cb(false)
 				}
 			}
-			libKeys.forEach(libKey => {
-			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+			const libKeysQueue = async.queue((task, taskCb) => {
+			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
 						plex.connected = true
@@ -205,6 +209,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 												} else {
 													libEnd()
 												}
+												taskCb()
 											})
 											return true
 										}
@@ -212,13 +217,34 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 								}
 							})
 						})
-						if (!foundMedia)
+						if (!foundMedia) {
+							libKeysLogs.push('Could not find video in plex library results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+							clearLibKeysLogs.push(res.body.children)
 							libEnd()
+							taskCb()
+						}
 					} else {
+						libKeysLogs.push('Failed searching library with key: ' + task.libKey)
+						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+							libKeysLogs.push('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+						if (err)
+							clearLibKeysLogs.push(err)
 						libEnd()
+						taskCb()
 					}
 				})
+			}, 1)
+
+			libKeysQueue.drain(() => {
+				if (!foundMediaIds) {
+					libKeysLogs.forEach(el => { logging.log(el) })
+					clearLibKeysLogs.forEach(el => { console.log(el) })
+				}
+				libKeysLogs = null
+				clearLibKeysLogs = null
 			})
+
+			libKeys.forEach(libKey => { libKeysQueue.push({ libKey }) })
 		} else {
 			cb(false)
 		}
