@@ -62,9 +62,11 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
 			let libRespond = false
+			let foundMediaIds = false
 			function libEnd(mediaIds) {
 				if (libRespond) return
 				if (mediaIds) {
+					foundMediaIds = true
 					libRespond = true
 					cb(mediaIds)
 					return
@@ -75,11 +77,12 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 					cb(false)
 				}
 			}
+			let libKeysLogs = []
+			let clearLibKeysLogs = []
 			const libKeysQueue = async.queue((task, taskCb) => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
-						logging.log('Library search succeeded for key: ' + task.libKey)
 						plex.connected = true
 						let mediaObj = false
 						res.body.children.some(mediaEl => {
@@ -111,21 +114,30 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 
 							libEnd(mediaIds)
 						} else {
-							logging.log('Could not find video in plex library results')
-							console.log(res.body.children)
+							libKeysLogs.push('Could not find video in plex library results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+							clearLibKeysLogs.push(res.body.children)
 							libEnd()
 						}
 					} else {
-						logging.log('Failed searching library with key: ' + task.libKey)
+						libKeysLogs.push('Failed searching library with key: ' + task.libKey)
 						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
-							logging.log('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+							libKeysLogs.push('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
 						if (err)
-							console.log(err)
+							clearLibKeysLogs.push(err)
 						libEnd()
 					}
 					taskCb()
 				})
 			}, 1)
+
+			libKeysQueue.drain(() => {
+				if (!foundMediaIds) {
+					libKeysLogs.forEach(el => { logging.log(el) })
+					clearLibKeysLogs.forEach(el => { console.log(el) })
+				}
+				libKeysLogs = null
+				clearLibKeysLogs = null
+			})
 
 			libKeys.forEach(libKey => { libKeysQueue.push({ libKey }) })
 		} else {
