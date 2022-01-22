@@ -57,7 +57,9 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 	}
 	logging.log('Searching for movie in Plex by filesize: ' + mediaSize)
 	plex.getLibraries(settings, 'movie', libsByType => {
-		logging.log('Number of libraries to search: ' + (libsByType || []).length)
+		let libKeysLogs = []
+		let clearLibKeysLogs = []
+		libKeysLogs.push('Number of libraries to searched: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
@@ -77,8 +79,6 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 					cb(false)
 				}
 			}
-			let libKeysLogs = []
-			let clearLibKeysLogs = []
 			const libKeysQueue = async.queue((task, taskCb) => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
