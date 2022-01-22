@@ -55,7 +55,9 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 		cb(false)
 		return
 	}
+	logging.log('Searching for movie in Plex by filesize: ' + mediaSize)
 	plex.getLibraries(settings, 'movie', libsByType => {
+		logging.log('Number of libraries to search: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
@@ -77,6 +79,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 				needle.get(url, (err, res) => {
 					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+						logging.log('Library search succeeded for key: ' + libKey)
 						plex.connected = true
 						let mediaObj = false
 						res.body.children.some(mediaEl => {
@@ -105,11 +108,19 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 							})
 							if (movieFile)
 								cache.movie[movieFile] = mediaIds
+
 							libEnd(mediaIds)
 						} else {
+							logging.log('Could not find video in plex library results')
+							console.log(res.body.children)
 							libEnd()
 						}
 					} else {
+						logging.log('Failed searching library with key: ' + libKey)
+						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+							logging.log('No search results in library with key: ' + libKey + ' for filesize: ' + mediaSize)
+						if (err)
+							console.log(err)
 						libEnd()
 					}
 				})
