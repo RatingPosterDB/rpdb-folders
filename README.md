@@ -2,17 +2,15 @@
 
 Monitors Media Folders and Adds Images with Ratings (poster.jpg / background.jpg) from the [RPDB API](https://ratingposterdb.com/).
 
-**Now also supports movie files that do not have their own subfolders!** 
-
 This is a cross-platform solution to adding Images with Ratings for Plex / Emby / Jellyfin / Kodi / other media centers.
 
 See screenshots of [Rating Posters in Various Apps](https://ratingposterdb.com/#see-it-in-action) and [Examples of Various Supported Rating Posters](https://ratingposterdb.com/examples/).
 
 ## Downloads
 
-- [Windows RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.0/win-rpdb-folders.zip)
-- [OSX RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.0/osx-rpdb-folders.zip)
-- [Linux RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.0/linux-rpdb-folders.zip)
+- [Windows RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.1/win-rpdb-folders.zip)
+- [OSX RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.1/osx-rpdb-folders.zip)
+- [Linux RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/download/v0.2.1/linux-rpdb-folders.zip)
 - [Docker RPDB Folders](https://hub.docker.com/r/jaruba/rpdb-folders-docker)
 
 Note: If (for any reason) the settings web page does not open by itself after running the application, then open `http://127.0.0.1:8750/` in your browser.
