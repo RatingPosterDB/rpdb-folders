@@ -51,7 +51,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 		cb(cache.movie[movieFile])
 		return
 	}
-	if (!(settings || {}).plex || !mediaSize) {
+	if (!(settings || {}).plex || (!mediaSize && !movieFile)) {
 		cb(false)
 		return
 	}
@@ -132,18 +132,14 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 					})
 				}
 				const filename = path.basename(movieFile)
-				const urlForSize = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				const urlForName = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				tryByLibUrl(urlForSize, 'bySize', mediaIds => {
-					if (!mediaIds) {
-						tryByLibUrl(urlForName, 'byName', mediaIds => {
-							libEnd(mediaIds)
-							taskCb()
-						})
-					} else {
-						libEnd(mediaIds)
-						taskCb()
-					}
+				let taskUrl = false
+				if (task.taskType == 'bySize')
+					taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+				else if (task.taskType == 'byName')
+					taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+				tryByLibUrl(taskUrl, task.taskType, mediaIds => {
+					libEnd(mediaIds)
+					taskCb()
 				})
 			}, 1)
 
@@ -156,7 +152,19 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				clearLibKeysLogs = null
 			})
 
-			libKeys.forEach(libKey => { libKeysQueue.push({ libKey }) })
+			// the order here is very important:
+
+			let filename = false
+
+			if (movieFile)
+				filename = path.basename(movieFile)
+
+			if (mediaSize)
+				libKeys.forEach(libKey => { libKeysQueue.push({ libKey, taskType: 'bySize' }) })
+
+			if (filename)
+				libKeys.forEach(libKey => { libKeysQueue.push({ libKey, taskType: 'byName' }) })
+
 		} else {
 			cb(false)
 		}
@@ -168,7 +176,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 		cb(cache.series[episodeFile])
 		return
 	}
-	if (!(settings || {}).plex || !episodeFile || !mediaSize) {
+	if (!(settings || {}).plex || (!mediaSize && !episodeFile)) {
 		cb(false)
 		return
 	}
@@ -207,7 +215,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 							const foundMedia = res.body.children.some(mediaEl => {
 								return mediaEl.children.some(el => {
 									if ((el || {}).name == 'Media') {
-										if ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(filename)) {
+										if (!episodeFile || ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(filename))) {
 											if ((mediaEl.attributes || {}).grandparentKey) {
 											 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + mediaEl.attributes.grandparentKey + '?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
 												needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
@@ -254,19 +262,15 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 					})
 				}
 				const filename = path.basename(episodeFile)
-			 	const urlForSize = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-			 	const urlForName = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-			 	tryByLibUrl(urlForSize, 'bySize', mediaIds => {
-			 		if (!mediaIds) {
-			 			tryByLibUrl(urlForName, 'byName', mediaIds => {
-			 				libEnd(mediaIds)
-			 				taskCb()
-			 			})
-			 		} else {
-			 			libEnd(mediaIds)
-			 			taskCb()
-			 		}
-			 	})
+				let taskUrl = false
+				if (task.taskType == 'bySize')
+				 	taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+			 	else if (task.taskType == 'byName')
+				 	taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+	 			tryByLibUrl(taskUrl, task.taskType, mediaIds => {
+	 				libEnd(mediaIds)
+	 				taskCb()
+	 			})
 			}, 1)
 
 			libKeysQueue.drain(() => {
@@ -278,7 +282,19 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 				clearLibKeysLogs = null
 			})
 
-			libKeys.forEach(libKey => { libKeysQueue.push({ libKey }) })
+			// the order here is very important:
+
+			let filename = false
+
+			if (episodeFile)
+				filename = path.basename(episodeFile)
+
+			if (mediaSize)
+				libKeys.forEach(libKey => { libKeysQueue.push({ libKey, taskType: 'bySize' }) })
+
+			if (filename)
+				libKeys.forEach(libKey => { libKeysQueue.push({ libKey, taskType: 'byName' }) })
+
 		} else {
 			cb(false)
 		}
