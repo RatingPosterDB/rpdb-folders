@@ -79,53 +79,67 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				}
 			}
 			const libKeysQueue = async.queue((task, taskCb) => {
-				const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
-					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
-						plex.connected = true
-						let mediaObj = false
-						res.body.children.some(mediaEl => {
-							return mediaEl.children.some(el => {
-								if ((el || {}).name == 'Media') {
-									if (!movieFile || (((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(path.basename(movieFile))) {
-										mediaObj = el
-										mediaObjParent = mediaEl
-										return true
+				function tryByLibUrl(url, tryType, tryCb) {
+					needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
+						if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+							plex.connected = true
+							let mediaObj = false
+							res.body.children.some(mediaEl => {
+								return mediaEl.children.some(el => {
+									if ((el || {}).name == 'Media') {
+										if (!movieFile || (((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(filename)) {
+											mediaObj = el
+											mediaObjParent = mediaEl
+											return true
+										}
 									}
-								}
+								})
 							})
-						})
-						if (mediaObj) {
-							const mediaIds = { plex: mediaObjParent.attributes.ratingKey }
-							mediaObjParent.children.forEach(el => {
-								if (el.name == 'Guid') {
-									if (((el.attributes || {}).id || '').startsWith('imdb://')) {
-										mediaIds.imdb = el.attributes.id.replace('imdb://', '')
-									} else if (((el.attributes || {}).id || '').startsWith('tmdb://')) {
-										mediaIds.tmdb = el.attributes.id.replace('tmdb://', '')
-									} else if (((el.attributes || {}).id || '').startsWith('tvdb://')) {
-										mediaIds.tvdb = el.attributes.id.replace('tvdb://', '')
+							if (mediaObj) {
+								const mediaIds = { plex: mediaObjParent.attributes.ratingKey }
+								mediaObjParent.children.forEach(el => {
+									if (el.name == 'Guid') {
+										if (((el.attributes || {}).id || '').startsWith('imdb://')) {
+											mediaIds.imdb = el.attributes.id.replace('imdb://', '')
+										} else if (((el.attributes || {}).id || '').startsWith('tmdb://')) {
+											mediaIds.tmdb = el.attributes.id.replace('tmdb://', '')
+										} else if (((el.attributes || {}).id || '').startsWith('tvdb://')) {
+											mediaIds.tvdb = el.attributes.id.replace('tvdb://', '')
+										}
 									}
-								}
-							})
-							if (movieFile)
-								cache.movie[movieFile] = mediaIds
+								})
+								if (movieFile)
+									cache.movie[movieFile] = mediaIds
 
-							libEnd(mediaIds)
+								tryCb(mediaIds)
+							} else {
+								libKeysLogs.push('Could not find video in plex library ('+tryType+') results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+								clearLibKeysLogs.push(res.body.children)
+								tryCb()
+							}
 						} else {
-							libKeysLogs.push('Could not find video in plex library results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
-							clearLibKeysLogs.push(res.body.children)
-							libEnd()
+							libKeysLogs.push('Failed searching library with key: ' + task.libKey)
+							if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+							if (err)
+								clearLibKeysLogs.push(err)
+							tryCb()
 						}
+					})
+				}
+				const filename = path.basename(movieFile)
+				const urlForSize = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+				const urlForName = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+				tryByLibUrl(urlForSize, 'bySize', mediaIds => {
+					if (!mediaIds) {
+						tryByLibUrl(urlForName, 'byName', mediaIds => {
+							libEnd(mediaIds)
+							taskCb()
+						})
 					} else {
-						libKeysLogs.push('Failed searching library with key: ' + task.libKey)
-						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
-							libKeysLogs.push('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
-						if (err)
-							clearLibKeysLogs.push(err)
-						libEnd()
+						libEnd(mediaIds)
+						taskCb()
 					}
-					taskCb()
 				})
 			}, 1)
 
@@ -178,61 +192,73 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 				}
 			}
 			const libKeysQueue = async.queue((task, taskCb) => {
-			 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-				needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
-					if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
-						plex.connected = true
-						const foundMedia = res.body.children.some(mediaEl => {
-							return mediaEl.children.some(el => {
-								if ((el || {}).name == 'Media') {
-									if ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(path.basename(episodeFile))) {
-										if ((mediaEl.attributes || {}).grandparentKey) {
-										 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + mediaEl.attributes.grandparentKey + '?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
-											needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
-												if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
-													const mediaObjParent = res.body.children[0]
-													const mediaIds = { plex: mediaEl.attributes.grandparentKey.split('/').pop() }
-													mediaObjParent.children.forEach(el => {
-														if (el.name == 'Guid') {
-															if (((el.attributes || {}).id || '').startsWith('imdb://')) {
-																mediaIds.imdb = el.attributes.id.replace('imdb://', '')
-															} else if (((el.attributes || {}).id || '').startsWith('tmdb://')) {
-																mediaIds.tmdb = el.attributes.id.replace('tmdb://', '')
-															} else if (((el.attributes || {}).id || '').startsWith('tvdb://')) {
-																mediaIds.tvdb = el.attributes.id.replace('tvdb://', '')
+			 	function tryByLibUrl(url, tryType, tryCb) {
+					needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
+						if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+							plex.connected = true
+							const foundMedia = res.body.children.some(mediaEl => {
+								return mediaEl.children.some(el => {
+									if ((el || {}).name == 'Media') {
+										if ((((el.children || {})[0] || {}).attributes || {}).file && el.children[0].attributes.file.endsWith(filename)) {
+											if ((mediaEl.attributes || {}).grandparentKey) {
+											 	const url = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + mediaEl.attributes.grandparentKey + '?X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+												needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
+													if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
+														const mediaObjParent = res.body.children[0]
+														const mediaIds = { plex: mediaEl.attributes.grandparentKey.split('/').pop() }
+														mediaObjParent.children.forEach(el => {
+															if (el.name == 'Guid') {
+																if (((el.attributes || {}).id || '').startsWith('imdb://')) {
+																	mediaIds.imdb = el.attributes.id.replace('imdb://', '')
+																} else if (((el.attributes || {}).id || '').startsWith('tmdb://')) {
+																	mediaIds.tmdb = el.attributes.id.replace('tmdb://', '')
+																} else if (((el.attributes || {}).id || '').startsWith('tvdb://')) {
+																	mediaIds.tvdb = el.attributes.id.replace('tvdb://', '')
+																}
 															}
-														}
-													})
-													if (episodeFile)
-														cache.series[episodeFile] = mediaIds
-													libEnd(mediaIds)
-												} else {
-													libEnd()
-												}
-												taskCb()
-											})
-											return true
+														})
+														if (episodeFile)
+															cache.series[episodeFile] = mediaIds
+														tryCb(mediaIds)
+													} else {
+														tryCb()
+													}
+												})
+												return true
+											}
 										}
 									}
-								}
+								})
 							})
-						})
-						if (!foundMedia) {
-							libKeysLogs.push('Could not find video in plex library results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
-							clearLibKeysLogs.push(res.body.children)
-							libEnd()
-							taskCb()
+							if (!foundMedia) {
+								libKeysLogs.push('Could not find video in plex library ('+tryType+') results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+								clearLibKeysLogs.push(res.body.children)
+								tryCb()
+							}
+						} else {
+							libKeysLogs.push('Failed searching library ('+tryType+') with key: ' + task.libKey)
+							if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+							if (err)
+								clearLibKeysLogs.push(err)
+							tryCb()
 						}
-					} else {
-						libKeysLogs.push('Failed searching library with key: ' + task.libKey)
-						if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
-							libKeysLogs.push('No search results in library with key: ' + task.libKey + ' for filesize: ' + mediaSize)
-						if (err)
-							clearLibKeysLogs.push(err)
-						libEnd()
-						taskCb()
-					}
-				})
+					})
+				}
+				const filename = path.basename(episodeFile)
+			 	const urlForSize = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+			 	const urlForName = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?file=' + encodeURIComponent(filename) + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
+			 	tryByLibUrl(urlForSize, 'bySize', mediaIds => {
+			 		if (!mediaIds) {
+			 			tryByLibUrl(urlForName, 'byName', mediaIds => {
+			 				libEnd(mediaIds)
+			 				taskCb()
+			 			})
+			 		} else {
+			 			libEnd(mediaIds)
+			 			taskCb()
+			 		}
+			 	})
 			}, 1)
 
 			libKeysQueue.drain(() => {
