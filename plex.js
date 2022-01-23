@@ -79,6 +79,10 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				}
 			}
 			const libKeysQueue = async.queue((task, taskCb) => {
+				if (foundMediaIds) {
+					taskCb()
+					return
+				}
 				function tryByLibUrl(url, tryType, tryCb) {
 					needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 						if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
@@ -192,6 +196,10 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 				}
 			}
 			const libKeysQueue = async.queue((task, taskCb) => {
+				if (foundMediaIds) {
+					taskCb()
+					return
+				}
 			 	function tryByLibUrl(url, tryType, tryCb) {
 					needle.get(url, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 						if (!err && (res || {}).statusCode == 200 && res.body && typeof res.body === 'object' && ((((res.body || {}).children || [])[0] || {}).children || []).length) {
