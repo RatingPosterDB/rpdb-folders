@@ -131,7 +131,6 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 						}
 					})
 				}
-				const filename = path.basename(movieFile)
 				let taskUrl = false
 				if (task.taskType == 'bySize')
 					taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&includeGuids=1&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
@@ -261,7 +260,6 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 						}
 					})
 				}
-				const filename = path.basename(episodeFile)
 				let taskUrl = false
 				if (task.taskType == 'bySize')
 				 	taskUrl = settings.plex.protocol + '://' + settings.plex.host + ':' + settings.plex.port + '/library/sections/' + task.libKey + '/all?mediaSize=' + mediaSize + '&type=4&includeCollections=0&includeExternalMedia=0&X-Plex-Token=' + settings.plex.token + '&X-Plex-Product=' + encodeURIComponent(rpdbAppName) + '&X-Plex-Client-Identifier=' + encodeURIComponent(rpdbAppId)
