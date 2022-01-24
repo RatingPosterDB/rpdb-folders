@@ -1735,6 +1735,7 @@ app.get(baseUrl+'pollData', (req, res) => passwordValid(req, res, (req, res) => 
 		historyCount: Object.keys(settings.imdbCache.movie || []).length + Object.keys(settings.imdbCache.series || []).length,
 		scanItems: nameQueue.length() || 0,
 		plexConnected: plex.connected,
+		plexQueue: plexRefreshQueue.length() || 0,
 	})
 }))
 

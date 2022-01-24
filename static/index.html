@@ -2462,6 +2462,10 @@
                 <h1 class="dialog-title">Plex Refresh Settings</h1>
                 <i style="opacity: 0.7">By default Plex items are refreshed immediately after a new poster or backdrop is downloaded, but a delay or time of day can be set</i>
                 <br/><br/><br/>
+                <b>Refresh Status</b>
+                <br/><br/>
+                <div class="plex-refresh-status" style="padding: 10px; border: 1px solid rgba(0,0,0,0.3); display: inline-block">Idle, no activity</div>
+                <br/><br/><br/>
                 <form class="pure-form plex-delay-form">
                     <b>Delay Type</b><br/><br/>
                     <select id="plex-delay-type">
@@ -4579,6 +4583,7 @@
                         var dt = new Date(parseInt(data.lastFullUpdate))
                         $('#full-scan-msg').html('Last full scan started:<br/><br/>' + dt.toLocaleString())
                         $('.scan-status').text(data.scanItems ? 'Scanning (' + data.scanItems + ' items in queue)' : 'Idle, not scanning')
+                        $('.plex-refresh-status').text(data.plexQueue ? 'Refreshing (' + data.plexQueue + ' items in queue)' : 'Idle, no activity')
                         if (data.plexConnected) {
                             $('#plex-status').html('Status: <b style="color: green">Connected</b>')
                             $('#plex-settings-button').show()
