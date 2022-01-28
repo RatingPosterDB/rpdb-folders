@@ -712,7 +712,7 @@ nameQueue.drain(() => {
 	}
 	if (plex.connected && plexPreQueue.length) {
 		if (settings.plexDelayType == 'tod')
-			plexTodQueue = plexPreQueue
+			plexTodQueue = plexTodQueue.concat(plexPreQueue)
 		else
 			startPlexQueue(plexPreQueue)
 		plexPreQueue = []
@@ -1062,7 +1062,10 @@ const plexRefreshQueue = async.queue((task, cb) => {
 	let once = false
 
 	function doneOnce() {
-		plexRefreshLimit = false
+		if (plexRefreshLimit) {
+			clearTimeout(plexRefreshLimit)
+			plexRefreshLimit = false
+		}
 		if (!once) { once = true; cb() }
 	}
 
@@ -1073,7 +1076,6 @@ const plexRefreshQueue = async.queue((task, cb) => {
 		const reqPlex = task
 
 		plex.pollForRefreshByFile(reqPlex.settings, reqPlex.mediaFile, reqPlex.type, result => {
-			if (plexRefreshLimit) clearTimeout(plexRefreshLimit)
 			if (!result || !Object.keys(reqPlex).length) {
 				if (((settings || {}).plex || {}).token)
 					logging.log('Warning: Could not refresh metadata in Plex for "' + reqPlex.mediaFile + '"')
@@ -1093,14 +1095,14 @@ const plexRefreshQueue = async.queue((task, cb) => {
 function startPlexQueue(items) {
 	if (items.length) {
 		logging.log('Starting metadata refresh for items in Plex, items queued: ' + items.length)
-		let plexTodDups = []
+		let plexNoDups = []
 		items.forEach(el => {
-			if (!plexTodDups.includes(el.mediaFile)) {
-				plexTodDups.push(el.mediaFile)
+			if (!plexNoDups.includes(el.mediaFile)) {
+				plexNoDups.push(el.mediaFile)
 				plexRefreshQueue.push(el)
 			}
 		})
-		plexTodDups = null
+		plexNoDups = null
 	}
 }
 
