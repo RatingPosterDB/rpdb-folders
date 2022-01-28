@@ -123,7 +123,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 							}
 						} else {
 							libKeysLogs.push('Failed searching library with key: ' + task.libKey)
-							if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+							if (!(((((res || {}).body || {}).children || [])[0] || {}).children || []).length)
 								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
 							if (err)
 								clearLibKeysLogs.push(err)
@@ -252,7 +252,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 							}
 						} else {
 							libKeysLogs.push('Failed searching library ('+tryType+') with key: ' + task.libKey)
-							if (!((((res.body || {}).children || [])[0] || {}).children || []).length)
+							if (!(((((res || {}).body || {}).children || [])[0] || {}).children || []).length)
 								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
 							if (err)
 								clearLibKeysLogs.push(err)
