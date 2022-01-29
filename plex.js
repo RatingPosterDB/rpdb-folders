@@ -158,14 +158,14 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 			libKeysQueue.drain(() => {
 				if (!foundMediaIds) {
 					Object.keys(plexLogs).forEach(tryType => {
-						Object.keys(plexLogs[tryType]).forEach(elm => {
-							if (plexLogs[tryType][elm].length) {
-								if (elm == 'notFound')
-									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
-								else if (elm == 'noResults')
-									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
-								else if (elm == 'failed')
-									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+						Object.keys(plexLogs[tryType]).forEach(warnType => {
+							if (plexLogs[tryType][warnType].length) {
+								if (warnType == 'notFound')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (warnType == 'noResults')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (warnType == 'failed')
+									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
 							}
 						})
 					})
@@ -310,14 +310,14 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 			libKeysQueue.drain(() => {
 				if (!foundMediaIds) {
 					Object.keys(plexLogs).forEach(tryType => {
-						Object.keys(plexLogs[tryType]).forEach(elm => {
-							if (plexLogs[tryType][elm].length) {
-								if (elm == 'notFound')
-									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
-								else if (elm == 'noResults')
-									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
-								else if (elm == 'failed')
-									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+						Object.keys(plexLogs[tryType]).forEach(warnType => {
+							if (plexLogs[tryType][warnType].length) {
+								if (warnType == 'notFound')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (warnType == 'noResults')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (warnType == 'failed')
+									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][warnType].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
 							}
 						})
 					})
