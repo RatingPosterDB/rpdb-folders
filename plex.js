@@ -11,6 +11,8 @@ const cache = { movie: {}, series: {} }
 
 const plex = { connected: false }
 
+const plexDebug = false
+
 const rpdbAppName = 'Rating Poster Database'
 const rpdbAppId = 'c41f9cfd-c5a6-478c-8558-338bcf042cf3'
 
@@ -56,9 +58,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 		return
 	}
 	plex.getLibraries(settings, 'movie', libsByType => {
-		let libKeysLogs = []
 		let clearLibKeysLogs = []
-		libKeysLogs.push('Number of libraries to search: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
@@ -76,6 +76,18 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 				if (!libCount) {
 					libRespond = true
 					cb(false)
+				}
+			}
+			const plexLogs = {
+				bySize: {
+					failed: [],
+					noResults: [],
+					notFound: [],
+				},
+				byName: {
+					failed: [],
+					noResults: [],
+					notFound: [],
 				}
 			}
 			const libKeysQueue = async.queue((task, taskCb) => {
@@ -117,14 +129,15 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 
 								tryCb(mediaIds)
 							} else {
-								libKeysLogs.push('Could not find video in plex library ('+tryType+') results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+								plexLogs[tryType].notFound.push(task.libKey)
 								clearLibKeysLogs.push(res.body.children)
 								tryCb()
 							}
 						} else {
-							libKeysLogs.push('Failed searching library with key: ' + task.libKey)
 							if (!(((((res || {}).body || {}).children || [])[0] || {}).children || []).length)
-								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+								plexLogs[tryType].noResults.push(task.libKey)
+							else
+								plexLogs[tryType].failed.push(task.libKey)
 							if (err)
 								clearLibKeysLogs.push(err)
 							tryCb()
@@ -144,10 +157,22 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 
 			libKeysQueue.drain(() => {
 				if (!foundMediaIds) {
-					libKeysLogs.forEach(el => { logging.log(el) })
-					clearLibKeysLogs.forEach(el => { console.log(el) })
+					Object.keys(plexLogs).forEach(tryType => {
+						Object.keys(plexLogs[tryType]).forEach(elm => {
+							if (plexLogs[tryType][elm].length) {
+								if (elm == 'notFound')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (elm == 'noResults')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (elm == 'failed')
+									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+							}
+						})
+					})
+					if (plexDebug)
+						clearLibKeysLogs.forEach(el => { console.log(el) })
 				}
-				libKeysLogs = null
+				plexLogs = null
 				clearLibKeysLogs = null
 			})
 
@@ -180,9 +205,19 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 		return
 	}
 	plex.getLibraries(settings, 'series', libsByType => {
-		let libKeysLogs = []
+		const plexLogs = {
+			bySize: {
+				failed: [],
+				noResults: [],
+				notFound: [],
+			},
+			byName: {
+				failed: [],
+				noResults: [],
+				notFound: [],
+			}
+		}
 		let clearLibKeysLogs = []
-		libKeysLogs.push('Number of libraries to search: ' + (libsByType || []).length)
 		if ((libsByType || []).length) {
 			const libKeys = libsByType.map(el => el.attributes.key)
 			let libCount = libKeys.length
@@ -246,14 +281,15 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 								})
 							})
 							if (!foundMedia) {
-								libKeysLogs.push('Could not find video in plex library ('+tryType+') results for key: ' + task.libKey + ' and filesize: ' + mediaSize)
+								plexLogs[tryType].notFound.push(task.libKey)
 								clearLibKeysLogs.push(res.body.children)
 								tryCb()
 							}
 						} else {
-							libKeysLogs.push('Failed searching library ('+tryType+') with key: ' + task.libKey)
 							if (!(((((res || {}).body || {}).children || [])[0] || {}).children || []).length)
-								libKeysLogs.push('No search results in library ('+tryType+') with key: ' + task.libKey + ' for filesize: ' + mediaSize)
+								plexLogs[tryType].noResults.push(task.libKey)
+							else
+								plexLogs[tryType].failed.push(task.libKey)
 							if (err)
 								clearLibKeysLogs.push(err)
 							tryCb()
@@ -273,10 +309,22 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 
 			libKeysQueue.drain(() => {
 				if (!foundMediaIds) {
-					libKeysLogs.forEach(el => { logging.log(el) })
-					clearLibKeysLogs.forEach(el => { console.log(el) })
+					Object.keys(plexLogs).forEach(tryType => {
+						Object.keys(plexLogs[tryType]).forEach(elm => {
+							if (plexLogs[tryType][elm].length) {
+								if (elm == 'notFound')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (elm == 'noResults')
+									logging.log('No search results in libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+								else if (elm == 'failed')
+									logging.log('Failed searching libraries ('+tryType+') with keys: ' + plexLogs[tryType][elm].join(',') + ' for ' + (tryType == 'bySize' ? ('filesize: ' + mediaSize) : ('filename: ' + filename)))
+							}
+						})
+					})
+					if (plexDebug)
+						clearLibKeysLogs.forEach(el => { console.log(el) })
 				}
-				libKeysLogs = null
+				plexLogs = null
 				clearLibKeysLogs = null
 			})
 
