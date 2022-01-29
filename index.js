@@ -356,7 +356,8 @@ const nameQueue = async.queue((task, cb) => {
 								cb()
 								return
 							} else if (!backdropExists) {
-								logging.log(`Backdrop skipped due to retry frequency setting, folder: ${task.name}`)
+								if (settings.backdrops)
+									logging.log(`Backdrop skipped due to retry frequency setting, folder: ${task.name}`)
 								blockBackdrop = true
 							}
 						}
