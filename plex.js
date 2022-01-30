@@ -78,7 +78,7 @@ plex.findMovieBySize = (settings, movieFile, mediaSize, cb, mediaFolder) => {
 					cb(false)
 				}
 			}
-			const plexLogs = {
+			let plexLogs = {
 				bySize: {
 					failed: [],
 					noResults: [],
