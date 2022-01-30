@@ -501,7 +501,7 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 			})
 
 		required.audioLang = false
-		requires.subLang = false
+		required.subLang = false
 
 		uniqueCountriesFromVideo = tempCountries.filter((item, pos) => tempCountries.indexOf(item) == pos).slice(0, parseInt(required.countryFlagDetectCount || 1))
 
