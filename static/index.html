@@ -1251,6 +1251,16 @@
                 <br/><br/><br/><br/><br/>
             </div>
         </div>
+        <div id="loading-search-index" class="full-page-dialog" style="display: none">
+            <div id="loading-search-index-text" style="text-align: center; display: none">
+                <br/><br/>
+                <b>Loading Search Index ...</b>
+                <br/><br/>
+                <i style="opacity: 0.7">This can take a while for large libraries</i>
+                <br/><br/>
+                <button type="button" class="pure-button" onclick="cancelLoadingSearch()">Cancel</button>
+            </div>
+        </div>
         <div id="preview-poster" class="full-page-dialog" style="display: none">
             <h1 class="dialog-title">Preview Poster</h1>
             <div style="text-align: center">
@@ -3671,30 +3681,52 @@
                 }))
             }
             let srcFolderName
+            let loadingSearchStrings = false
+            function cancelLoadingSearch() {
+                loadingSearchStrings = false
+                $('#loading-search-index').hide()
+            }
             function openPosterEdit(type, searchFolderName) {
                 searchFolderType = type
                 srcFolderName = searchFolderName
+                $('#loading-search-index-text').hide()
+                $('#loading-search-index').show()
+                loadingSearchStrings = true
+                setTimeout(() => {
+                    if (loadingSearchStrings)
+                        $('#loading-search-index-text').show()
+                }, 2000)
                 $.get('searchStrings?type=' + type + (searchFolderName ? '&searchfolder=' + searchFolderName : '') + '&pass=' + encodeURIComponent(servPass || ''), function(data) {
                     if (((data || {}).folders || '').length) {
-                        searchStrings = data
-                        $('#choose-media-folder-type').hide()
-                        $('#search-folder-input').val('')
-                        $('#search-folder').find('h1.dialog-title').text('Search ' + capitalizeFirstLetter(type) + ' Folders')
-                        $('#search-folder').show().scrollTop(0)
-                        $('.search-list').html('')
-                        $('#choose-search-folder').empty()
-                        $('#choose-search-folder').append(new Option('No Filter', 'all-folders'))
-
-                        data.folderChoices.forEach(function(el) {
-                            $('#choose-search-folder').append(new Option(el, el, false, !!(el == searchFolderName)))
-                        })
+                        if (!loadingSearchStrings) {
+                            return
+                        }
+                        loadingSearchStrings = false
+                        $('#loading-search-index').hide()
                         setTimeout(() => {
-                            $('#search-folder-input').select()
-                            if ((searchFolderName || '') == 'Unmatched' || (searchFolderName || '') == 'Missing Posters') {
-                                // show entire list if unmatched / missing posters is chosen
-                                searchFolders('')
-                            }
+                            searchStrings = data
+                            $('#choose-media-folder-type').hide()
+                            $('#search-folder-input').val('')
+                            $('#search-folder').find('h1.dialog-title').text('Search ' + capitalizeFirstLetter(type) + ' Folders')
+                            $('#search-folder').show().scrollTop(0)
+                            $('.search-list').html('')
+                            $('#choose-search-folder').empty()
+                            $('#choose-search-folder').append(new Option('No Filter', 'all-folders'))
+
+                            data.folderChoices.forEach(function(el) {
+                                $('#choose-search-folder').append(new Option(el, el, false, !!(el == searchFolderName)))
+                            })
+                            setTimeout(() => {
+                                $('#search-folder-input').select()
+                                if ((searchFolderName || '') == 'Unmatched' || (searchFolderName || '') == 'Missing Posters') {
+                                    // show entire list if unmatched / missing posters is chosen
+                                    searchFolders('')
+                                }
+                            })
                         })
+                    } else if (loadingSearchStrings) {
+                        loadingSearchStrings = false
+                        $('#loading-search-index').hide()
                     }
                 })
             }
