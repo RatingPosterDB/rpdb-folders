@@ -8,6 +8,8 @@ const fileHelper = require('./files')
 
 const convert3To1 = require('iso-639-3-to-1')
 
+const langsMap = require('./langs')
+
 const tnp = require('torrent-name-parser')
 
 const logging = require('./logging')
@@ -456,9 +458,9 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 
 	let badgeCountry = false
 
-	if ((required.countryFlag || '').includes('_')) {
-		const badgeLang = required.countryFlag.split('_')[0]
-		badgeCountry = required.countryFlag.split('_')[1].replace('-','_').toLowerCase()
+	let uniqueCountriesFromVideo = []
+
+	function setCountryFlagWhere() {
 		if (required.countryFlagWhere == 'audio') {
 			required.audioLang = badgeLang
 		} else if (required.countryFlagWhere == 'sub') {
@@ -467,6 +469,42 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 			required.audioLang = badgeLang
 			required.subLang = badgeLang
 		}
+	}
+
+	if ((required.countryFlag || '').includes('_')) {
+		setCountryFlagWhere()
+		const badgeLang = required.countryFlag.split('_')[0]
+		badgeCountry = required.countryFlag.split('_')[1].replace('-','_').toLowerCase()
+	} else if (required.countryFlag == 'detect') {
+		setCountryFlagWhere()
+
+		const tempCountries = []
+
+		if (required.audioLang && (fileDb.languages.audio || []).length)
+			fileDb.languages.audio.forEach(lang => {
+				langsMap.some(langCode => {
+					if (langCode.startsWith(lang + '_')) {
+						tempCountries.push(langCode.split('_')[1])
+						return true
+					}
+				})
+			})
+
+		if (required.subLang && (fileDb.languages.subtitles || []).length)
+			fileDb.languages.subtitles.forEach(lang => {
+				langsMap.some(langCode => {
+					if (langCode.startsWith(lang + '_')) {
+						tempCountries.push(langCode.split('_')[1])
+						return true
+					}
+				})
+			})
+
+		required.audioLang = false
+		requires.subLang = false
+
+		uniqueCountriesFromVideo = tempCountries.filter((item, pos) => tempCountries.indexOf(item) == pos).slice(0, parseInt(required.countryFlagDetectCount || 1))
+
 	}
 
 	let foundLang = false
@@ -493,6 +531,8 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 
 	if (foundLang && badgeCountry)
 		badges.push('country.' + badgeCountry)
+	else if (uniqueCountriesFromVideo.length)
+		uniqueCountriesFromVideo.forEach(el => { badges.push('country.' + el) })
 
 	return badges.length ? badges.join(',') : false
 }

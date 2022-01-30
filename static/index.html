@@ -618,6 +618,8 @@
                             <select id="country-flag-badge">
                                 <option value="none">
                                     None
+                                </option><option value="detect">
+                                    Detect from Video
                                 </option><option value="aa_ET">
                                     Afar
                                 </option><option value="af_ZA">
@@ -1052,6 +1054,21 @@
                                     Subtitle Found
                                 </option>
                             </select>
+                            <div id="country-flag-detect-holder" style="text-align: center; display: none">
+                                <br/><br/>
+                                <i style="opacity: 0.7">Choose how many country flags to show</i>
+                                <br/><br/>
+                                <select id="country-flag-detect-count">
+                                    <option value="1-langs">
+                                        Primary Only
+                                    </option><option value="2-langs">
+                                        2 Languages
+                                    </option><option value="3-langs">
+                                        3 Languages
+                                    </option>
+                                </select>
+                            </div>
+
                         </div>
                     </form>
                 </div>
@@ -3141,9 +3158,14 @@
                         updateSettings();
                     });
                     $('#country-flag-badge').on('change', function() {
-                        if ($('#country-flag-badge').val() != 'none')
+                        if ($('#country-flag-badge').val() != 'none') {
+                            if ($('#country-flag-badge').val() == 'detect') {
+                                $('#country-flag-detect-count').val($('#country-flag-detect-count option:first').val())
+                                $('#country-flag-detect-holder').show()
+                            } else
+                                $('#country-flag-detect-holder').hide()
                             $('#country-flag-where-holder').show()
-                        else
+                        } else
                             $('#country-flag-where-holder').hide()
                     })
                     $("#change-api-key").click(function(e) {
@@ -4255,6 +4277,7 @@
                 $('#country-flag-badge').val($('#country-flag-badge option:first').val())
                 $('#country-flag-where').val($('#country-flag-where option:first').val())
                 $('#country-flag-where-holder').hide()
+                $('#country-flag-detect-holder').hide()
                 $('#badges-auto-color-range-choice').hide()
                 $('#badges-auto-video-source-choice').hide()
             }
@@ -4339,6 +4362,10 @@
                             if (tmpObj.countryFlag) {
                                 $('#country-flag-badge').val(tmpObj.countryFlag)
                                 if (tmpObj.countryFlag != 'none') {
+                                    if (tmpObj.countryFlag == 'detect') {
+                                        $('#country-flag-detect-holder').show()
+                                        $('#country-flag-detect-count').val(tmpObj.countryFlagDetectCount || '1-langs')
+                                    }
                                     $('#country-flag-where-holder').show()
                                     $('#country-flag-where').val(tmpObj.countryFlagWhere || 'none')
                                 }
@@ -4541,8 +4568,11 @@
                             tempBadgeString += '&audioChannels=1'
                         if ($('#badges-auto-video-source').is(':checked'))
                             tempBadgeString += '&videoSource=1'
-                        if ($('#country-flag-badge').val() != 'none')
+                        if ($('#country-flag-badge').val() != 'none') {
+                            if ($('#country-flag-badge').val() == 'detect')
+                                tempBadgeString += '&countryFlagDetectCount=' + ($('#country-flag-detect-count').val() || '1-langs')
                             tempBadgeString += '&countryFlag=' + $('#country-flag-badge').val()
+                        }
                         if ($('#country-flag-where').val() != 'none')
                             tempBadgeString += '&countryFlagWhere=' + $('#country-flag-where').val()
 
