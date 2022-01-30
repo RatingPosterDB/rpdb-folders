@@ -460,7 +460,7 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 
 	let uniqueCountriesFromVideo = []
 
-	function setCountryFlagWhere() {
+	function setCountryFlagWhere(badgeLang) {
 		if (required.countryFlagWhere == 'audio') {
 			required.audioLang = badgeLang
 		} else if (required.countryFlagWhere == 'sub') {
@@ -472,11 +472,11 @@ const getQueryString = (fileDb, required, fileLoc, defBadges) => {
 	}
 
 	if ((required.countryFlag || '').includes('_')) {
-		setCountryFlagWhere()
 		const badgeLang = required.countryFlag.split('_')[0]
+		setCountryFlagWhere(badgeLang)
 		badgeCountry = required.countryFlag.split('_')[1].replace('-','_').toLowerCase()
 	} else if (required.countryFlag == 'detect') {
-		setCountryFlagWhere()
+		setCountryFlagWhere(true)
 
 		const tempCountries = []
 
