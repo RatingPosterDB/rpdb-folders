@@ -1062,6 +1062,8 @@ const plexRefreshQueue = async.queue((task, cb) => {
 
 	let once = false
 
+	let plexRefreshLimit = false
+
 	function doneOnce() {
 		if (plexRefreshLimit) {
 			clearTimeout(plexRefreshLimit)
@@ -1072,7 +1074,7 @@ const plexRefreshQueue = async.queue((task, cb) => {
 
 	function handlePlexRefresh() {
 
-		let plexRefreshLimit = setTimeout(doneOnce, 30 * 1000)
+		plexRefreshLimit = setTimeout(doneOnce, 30 * 1000)
 
 		const reqPlex = task
 
