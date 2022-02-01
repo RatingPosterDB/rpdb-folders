@@ -205,7 +205,7 @@ plex.findSeriesByEpisodeSize = (settings, episodeFile, mediaSize, cb, mediaFolde
 		return
 	}
 	plex.getLibraries(settings, 'series', libsByType => {
-		const plexLogs = {
+		let plexLogs = {
 			bySize: {
 				failed: [],
 				noResults: [],
