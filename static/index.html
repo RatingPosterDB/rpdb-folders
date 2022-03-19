@@ -2619,6 +2619,9 @@
                         </select>
                     </div>
                     <br/><br/>
+                    <label for="detect-from-plex" class="pure-checkbox" style="display: inline-block">
+                        <input type="checkbox" id="detect-from-plex" class="optionsCheckbox" value="plexdetect" /> Use Plex to Match Folder Name to Metadata ID</label>
+                    <br/><br/>
                     <button type="button" class="pure-button pure-button-primary edit-poster-buttons" onclick="savePlexRefreshSettings()">Save Settings</button>
                     <button type="button" class="pure-button edit-poster-buttons" onclick="closePlexRefreshSettings()">Cancel</button>
                     <br/><br/><br/>
@@ -2870,6 +2873,9 @@
                             }
                             if (data.webhookSonarr) {
                                 $('#webhookSonarr').val(data.webhookSonarr)
+                            }
+                            if (data.plexDetect) {
+                                $("#detect-from-plex").prop('checked', true)
                             }
                             // load saved data
                             if (data.pkgVersion) {
@@ -4015,7 +4021,8 @@
                 var plexTodHour = $('#plex-tod-hour').val() || '1'
                 var plexTodMin = $('#plex-tod-min').val() || '0'
                 var plexTodAmPm = $('#plex-tod-am-pm').val() || 'AM'
-                $.get('savePlexRefreshSettings?pass=' + encodeURIComponent(servPass || '') + '&plexDelayType=' + plexDelayType + '&plexRefreshDelay=' + plexRefreshDelay + '&plexTodHour=' + plexTodHour + '&plexTodMin=' + plexTodMin + '&plexTodAmPm=' + plexTodAmPm, function(data) {
+                var plexDetect = $('#detect-from-plex').is(':checked') ? '1' : '0'
+                $.get('savePlexRefreshSettings?pass=' + encodeURIComponent(servPass || '') + '&plexDelayType=' + plexDelayType + '&plexRefreshDelay=' + plexRefreshDelay + '&plexTodHour=' + plexTodHour + '&plexTodMin=' + plexTodMin + '&plexTodAmPm=' + plexTodAmPm + '&plexDetect=' + plexDetect, function(data) {
                     if ((data || {}).success) {
                         plexDelaySettings.plexDelayType = plexDelayType
                         plexDelaySettings.plexRefreshDelay = plexRefreshDelay

@@ -693,7 +693,7 @@ const nameQueue = async.queue((task, cb) => {
 					}
 				}
 			}
-		}, reqPlex.mediaFolder)
+		}, reqPlex.mediaFolder, !settings.plexDetect)
 	}
 
 }, 1)
@@ -1139,6 +1139,7 @@ app.get(baseUrl+'savePlexRefreshSettings', (req, res) => passwordValid(req, res,
 	const plexTodHour = parseInt((req.query || {}).plexTodHour || '1')
 	const plexTodMin = parseInt((req.query || {}).plexTodMin || '0')
 	const plexTodAmPm = (req.query || {}).plexTodAmPm || 'AM'
+	const plexDetect = parseInt((req.query || {}).plexDetect || '0')
 	if (plexDelayType != settings.plexDelayType) {
 		settings.plexDelayType = plexDelayType
 		config.set('plexDelayType', settings.plexDelayType)
@@ -1158,6 +1159,10 @@ app.get(baseUrl+'savePlexRefreshSettings', (req, res) => passwordValid(req, res,
 	if (plexTodAmPm != settings.plexTodAmPm) {
 		settings.plexTodAmPm = plexTodAmPm
 		config.set('plexTodAmPm', settings.plexTodAmPm)
+	}
+	if (plexDetect != settings.plexDetect) {
+		settings.plexDetect = plexDetect
+		config.set('plexDetect', settings.plexDetect)
 	}
 	setPlexTodUpdate()
 	res.setHeader('Content-Type', 'application/json')
@@ -1347,6 +1352,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		plexTodHour: settings.plexTodHour,
 		plexTodMin: settings.plexTodMin,
 		plexTodAmPm: settings.plexTodAmPm,
+		plexDetect: settings.plexDetect,
 		retryFrequency: settings.retryFrequency,
 		retryNewerThanMonths: settings.retryNewerThanMonths,
 	})

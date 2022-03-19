@@ -506,8 +506,8 @@ plex.pollForRefreshByFile = async (settings, file, mediaType, cb, mediaFolder) =
 	retrier.push({ settings, file, mediaType, cb, mediaFolder })
 }
 
-plex.pollForIdsByFile = async (settings, file, mediaType, cb, mediaFolder) => {
-	if (!((settings || {}).plex || {}).token || !plex.connected) {
+plex.pollForIdsByFile = async (settings, file, mediaType, cb, mediaFolder, skipMatching) => {
+	if (!((settings || {}).plex || {}).token || !plex.connected || skipMatching) {
 		cb(false)
 		return
 	}

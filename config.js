@@ -71,6 +71,7 @@ let map = {
     plexTodHour: 1,
     plexTodMin: 0,
     plexTodAmPm: 'AM',
+    plexDetect: 1,
     defaultBadges: {
         dolbyvision: 'dolbyvision',
         hdr: 'hdrcolor',
