@@ -1902,7 +1902,7 @@ function extendedDataCreatePoster(imdbId, imdbType, tmdbId, tmdbType, posterImag
 	} else {
 		if (!imdbId) {
 			let newKey = 1
-			for (let i = 1; settings.customPosters['tt' + i]; i++) {
+			for (let i = 2; settings.customPosters['tt'+i]; i++) {
 				newKey = i
 			}
 			newKey += 1
