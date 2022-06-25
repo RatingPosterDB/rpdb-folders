@@ -738,6 +738,10 @@ let isFolderScanRunning = false
 function startFetchingPosters(theseFolders, type, forced, avoidYearMatch, isFolderScan) {
 	let allFolders = []
 	theseFolders.forEach(mediaFolder => {
+		if (!fs.existsSync(mediaFolder)) {
+			logging.log(`Directory ${mediaFolder} is no longer accessible, skipping media folder scan`)
+			return;
+		}
 		const subFolders = getDirectories(mediaFolder)
 		if ((subFolders || []).length)
 			allFolders = allFolders.concat(subFolders)
