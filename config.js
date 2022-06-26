@@ -55,6 +55,8 @@ let map = {
     seriesTextless: false,
     moviePosterType: 'poster-default',
     seriesPosterType: 'poster-default',
+    movieRatingOrder: '',
+    seriesRatingOrder: '',
     updateTransitionMay: true,
     ignoreInitialScan: false,
     usePolling: isDocker() ? true : false,

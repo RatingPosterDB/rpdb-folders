@@ -218,6 +218,7 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 
 function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos, badgeSize) {
 	let posterType = settings[mediaType + 'PosterType']
+	let ratingOrder = settings[mediaType + 'RatingOrder']
 	let customPoster = ''
 	if (settings.customPosters[imdbId]) {
 		customPoster = settings.customPosters[imdbId].replace('[[api-key]]', settings.apiKey).replace('[[poster-type]]', posterType).replace('[[imdb-id]]', imdbId)
@@ -250,6 +251,11 @@ function posterFromImdbId(imdbId, mediaType, folderLabel, badgeString, badgePos,
 		if (customPoster.includes('?')) customPoster += '&'
 		else customPoster += '?'
 		customPoster += 'badgeSize=' + (settings.itemBadgeSizes[imdbId] || badgeSize)
+	}
+	if (posterType == 'rating-order' && ratingOrder && typeof ratingOrder === 'string') {
+		if (customPoster.includes('?')) customPoster += '&'
+		else customPoster += '?'
+		customPoster += 'order=' + encodeURIComponent(ratingOrder)
 	}
 	return customPoster
 }
@@ -1313,6 +1319,16 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.scanOrder = scanOrder || settings.scanOrder
 		config.set('scanOrder', settings.scanOrder)
 	}
+	const movieRatingOrder = (req.query || {}).movieRatingOrder || ''
+	if (movieRatingOrder != settings.movieRatingOrder) {
+		settings.movieRatingOrder = movieRatingOrder
+		config.set('movieRatingOrder', settings.movieRatingOrder)
+	}
+	const seriesRatingOrder = (req.query || {}).seriesRatingOrder || ''
+	if (seriesRatingOrder != settings.seriesRatingOrder) {
+		settings.seriesRatingOrder = seiresRatingOrder
+		config.set('seriesRatingOrder', settings.seriesRatingOrder)
+	}
 	res.setHeader('Content-Type', 'application/json')
 	res.send({ success: true })	
 }))
@@ -1338,6 +1354,8 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		seriesTextless: settings.seriesTextless,
 		moviePosterType: settings.moviePosterType,
 		seriesPosterType: settings.seriesPosterType,
+		movieRatingOrder: settings.movieRatingOrder,
+		seriesRatingOrder: settings.seriesRatingOrder,
 		usePolling: settings.useWebhook ? 'webhook' : settings.usePolling ? 'polling' : 'fsevents',
 		pollingInterval: settings.pollingInterval,
 		moviePosterLang: settings.posterLang.movie,
