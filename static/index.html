@@ -215,6 +215,9 @@
                         </div>
                         <label for="backdrops-option-one" class="pure-checkbox" style="display: inline-block">
                             <input type="checkbox" id="backdrops-option-one" class="optionsCheckboxBackdrops" value="backdrops" disabled="" /> Download Backdrops</label>
+                        &nbsp;&nbsp;&nbsp;
+                        <label for="backdrops-option-two" class="pure-checkbox" style="display: inline-block">
+                            <input type="checkbox" id="backdrops-option-two" class="optionsCheckboxBadgesBackdrops" value="badges-backdrops" disabled="" /> Badges on Backdrops</label>
                         <br/><br/><br/>
                         <b>Media Folders</b><br/><br/>
                         <div>
@@ -552,6 +555,13 @@
                     <form class="pure-form badge-auto-form">
                         <b>Badge Position</b><br/><br/>
                         <select id="badge-auto-position">
+                            <option value="left">Top Left</option>
+                            <option value="center">Top Center</option>
+                            <option value="right">Top Right</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Backdrop Badge Position</b><br/><br/>
+                        <select id="backdrop-badge-auto-position">
                             <option value="left">Top Left</option>
                             <option value="center">Top Center</option>
                             <option value="right">Top Right</option>
@@ -1078,6 +1088,13 @@
                     <form class="pure-form badge-form">
                         <b>Badge Position</b><br/><br/>
                         <select id="badge-position">
+                            <option value="left">Top Left</option>
+                            <option value="center">Top Center</option>
+                            <option value="right">Top Right</option>
+                        </select>
+                        <br/><br/><br/>
+                        <b>Backdrop Badge Position</b><br/><br/>
+                        <select id="backdrop-badge-position">
                             <option value="left">Top Left</option>
                             <option value="center">Top Center</option>
                             <option value="right">Top Right</option>
@@ -1808,7 +1825,7 @@
                     <label for="movie-checkbox-radio-option-five" class="pure-radio" style="display: inline-block">
                         <input type="radio" id="movie-checkbox-radio-option-five" name="movieOptionsRadios" value="rating-order" /> <span id="movie-rating-order-label">Choose Rating Order (Tier 3+)</span></label>
                     <div id="movie-order-options" style="display: none">
-                        <br/><br/><br/><br/>
+                        <br/><br/><br/>
                         <b>Movie Posters Rating Order</b>
                         <br/><br/>
                         <i style="opacity: 0.7">You can choose up to 5 ratings, the order in which you select the ratings is the order in which they will be shown.</i>
@@ -2249,7 +2266,7 @@
                     <label for="series-checkbox-radio-option-five" class="pure-radio" style="display: inline-block">
                         <input type="radio" id="series-checkbox-radio-option-five" name="seriesOptionsRadios" value="rating-order" /> <span id="series-rating-order-label">Choose Rating Order (Tier 3+)</span></label>
                     <div id="series-order-options" style="display: none">
-                        <br/><br/><br/><br/>
+                        <br/><br/><br/>
                         <b>Series Posters Rating Order</b>
                         <br/><br/>
                         <i style="opacity: 0.7">You can choose up to 5 ratings, the order in which you select the ratings is the order in which they will be shown.</i>
@@ -2836,6 +2853,7 @@
                     if (tier == 3 || tier == 4 || tier == 5) {
                         $('#note-tier-3').hide()
                         $('#backdrops-option-one').prop('disabled', false)
+                        $('#backdrops-option-two').prop('disabled', false)
                         $('.open-add-badges-button').attr('onclick', 'openAddBadges()');
                     } else {
                         if ($('#backdrops-option-one').is(':checked')) {
@@ -2845,6 +2863,7 @@
                         $('.open-add-badges-button').attr('onclick', 'openTier3onlyMessage()');
                         $('#note-tier-3').show()
                         $('#backdrops-option-one').prop('disabled', true)
+                        $('#backdrops-option-two').prop('disabled', true)
                         $('#custom-poster-allowed').hide()
                         $('#custom-poster-disallowed').show()
                         $('#movie-checkbox-radio-option-five').attr("disabled", true)
@@ -2907,6 +2926,10 @@
                 if ($("#backdrops-option-one").is(':checked')) {
                   backdrops = 1;
                 }
+                var backdropsBadges = 0
+                if ($("#backdrops-option-two").is(':checked')) {
+                  backdropsBadges = 1;
+                }
                 var movieTextless = 0
                 if ($("#movie-textless-option-one").is(':checked')) {
                   movieTextless = 1;
@@ -2925,7 +2948,7 @@
                 var webhookDelay = $('input[name=webhookDelayRadios]:checked', '#webhook-delay-opts-form').val();
                 var moviePosterLang = $('#movie-poster-lang').val()
                 var seriesPosterLang = $('#series-poster-lang').val()
-                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&retryFrequency=' + retryFrequency + '&retryNewerThanMonths=' + retryNewerThanMonths + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&plexProtocol=' + plexSettings.protocol + '&plexHost=' + plexSettings.host + '&plexPort=' + plexSettings.port + '&plexToken=' + plexSettings.token + '&movieRatingOrder=' + movieRatingOrder + '&seriesRatingOrder=' + seriesRatingOrder + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
+                $.get('setSettings?moviePosterType=' + moviePosterType + '&seriesPosterType=' + seriesPosterType + '&overwrite=' + overwrite + '&backdrops=' + backdrops + '&movieTextless=' + movieTextless + '&seriesTextless=' + seriesTextless + '&overwritePeriod=' + overwritePeriod + '&retryFrequency=' + retryFrequency + '&retryNewerThanMonths=' + retryNewerThanMonths + '&overwrite2years=' + overwrite2years + '&noEmptyFolders=' + noEmptyFolders + '&noScanOnStart=' + noScanOnStart + '&scanOrder=' + scanOrder + '&usePolling=' + usePolling + '&useWebhook=' + useWebhook + '&webhookDelay=' + webhookDelay + '&pollingInterval=' + pollingInterval + '&cacheMatches=' + cacheMatches + '&overwriteProbe=' + overwriteProbe + '&moviePosterLang=' + moviePosterLang + '&seriesPosterLang=' + seriesPosterLang + '&hdrBadge=' + hdrBadge + '&doviBadge=' + doviBadge + '&remuxBadge=' + remuxBadge + '&plexProtocol=' + plexSettings.protocol + '&plexHost=' + plexSettings.host + '&plexPort=' + plexSettings.port + '&plexToken=' + plexSettings.token + '&movieRatingOrder=' + movieRatingOrder + '&seriesRatingOrder=' + seriesRatingOrder + '&backdropsBadges=' + backdropsBadges + '&pass=' + encodeURIComponent(servPass || ''), function(data) {});
             }
             var servPass = false
             function set_pass() {
@@ -3019,6 +3042,9 @@
                             }
                             if (data.seriesTextless) {
                                 $("#series-textless-option-one").prop('checked', true)
+                            }
+                            if (data.backdropsBadges) {
+                                $("#backdrops-option-two").prop('checked', true)
                             }
                             if (data.moviePosterType) {
                                 $('input[name=movieOptionsRadios]', '#poster-type-opts-form').each((ij,el)=> {
@@ -3447,6 +3473,9 @@
                         updateSettings();
                     });
                     $("#backdrops-option-one").on('change', function() {
+                        updateSettings();
+                    });
+                    $("#backdrops-option-two").on('change', function() {
                         updateSettings();
                     });
                     $("#movie-textless-option-one").on('change', function() {
@@ -4584,6 +4613,7 @@
             function resetAllBadgeValues() {
                 // manual badge values
                 $('#badge-position').val($('#badge-position option:first').val())
+                $('#backdrop-badge-position').val($('#backdrop-badge-position option:first').val())
                 $('#badge-size').val($('#badge-size option:first').val())
                 $('#video-quality-badges').val($('#video-quality-badges option:first').val())
                 $('#3d-badges').val($('#3d-badges option:first').val())
@@ -4604,6 +4634,7 @@
 
                 // auto badge values
                 $('#badge-auto-position').val($('#badge-auto-position option:first').val())
+                $('#backdrop-badge-auto-position').val($('#backdrop-badge-auto-position option:first').val())
                 $('#badge-auto-size').val($('#badge-auto-size option:first').val())
                 $('#badges-auto-video-quality').prop('checked', false)
                 $('#badges-auto-color-range').prop('checked', false)
@@ -4672,6 +4703,9 @@
                             if (data.badgePos)
                                 $('#badge-auto-position').val(data.badgePos)
 
+                            if (data.backdropBadgePos)
+                                $('#backdrop-badge-auto-position').val(data.backdropBadgePos)
+
                             if (data.badgeSize)
                                 $('#badge-auto-size').val(data.badgeSize)
 
@@ -4717,6 +4751,9 @@
 
                             if (data.badgePos)
                                 $('#badge-position').val(data.badgePos)
+
+                            if (data.backdropBadgePos)
+                                $('#backdrop-badge-position').val(data.backdropBadgePos)
 
                             if (data.badgeSize)
                                 $('#badge-size').val(data.badgeSize)
@@ -4766,6 +4803,7 @@
                 } else {
                     if ($('#badge-manual-or-auto').val() == 'manual') {
                         var badgePos = $('#badge-position').val()
+                        var backdropBadgePos = $('#backdrop-badge-position').val()
                         var badgeSize = $('#badge-size').val()
                         var badgeData = [
                             $('#video-quality-badges').val(),
@@ -4857,6 +4895,7 @@
 
                     if ($('#badge-manual-or-auto').val() == 'manual') {
                         var badgePos = $('#badge-position').val()
+                        var backdropBadgePos = $('#backdrop-badge-position').val()
                         var badgeSize = $('#badge-size').val()
                         var badgeData = [
                             $('#video-quality-badges').val(),
@@ -4886,6 +4925,8 @@
                             badgeQueryString = '?badges=' + encodeURIComponent(badgeData.join(','))
                             if (badgePos && badgePos != 'left')
                                 badgeQueryString += '&badgePos=' + badgePos
+                            if (backdropBadgePos && backdropBadgePos != 'left')
+                                badgeQueryString += '&backdropBadgePos=' + backdropBadgePos
                             if (badgeSize && badgeSize != 'normal')
                                 badgeQueryString += '&badgeSize=' + badgeSize
                         }
@@ -4893,6 +4934,7 @@
                         isAutoBadges = true
                         let tempBadgeString = ''
                         var badgePos = $('#badge-auto-position').val()
+                        var backdropBadgePos = $('#backdrop-badge-auto-position').val()
                         var badgeSize = $('#badge-auto-size').val()
                         if ($('#badges-auto-video-quality').is(':checked'))
                             tempBadgeString += '&videoQuality=1'
@@ -4916,6 +4958,8 @@
                             badgeQueryString = '?badges=' + encodeURIComponent(tempBadgeString.substr(1))
                             if (badgePos && badgePos != 'left')
                                 badgeQueryString += '&badgePos=' + badgePos
+                            if (backdropBadgePos && backdropBadgePos != 'left')
+                                badgeQueryString += '&backdropBadgePos=' + backdropBadgePos
                             if (badgeSize && badgeSize != 'normal')
                                 badgeQueryString += '&badgeSize=' + badgeSize
                             if (isAutoBadges)

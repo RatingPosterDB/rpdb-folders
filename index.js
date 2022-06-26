@@ -300,11 +300,15 @@ const nameQueue = async.queue((task, cb) => {
 
 	const badgePos = settings.badgePositions[parentMediaFolder]
 
+	const backdropBadgePos = settings.backdropBadgePositions[parentMediaFolder]
+
 	const badgeSize = settings.badgeSizes[parentMediaFolder]
 
 	const posterName = task.posterName || 'poster.jpg'
 
 	const backdropName = task.backdropName || 'background.jpg'
+
+	const ratingOrder = settings[task.type + 'RatingOrder']
 
 	let targetFolder = task.folder
 
@@ -437,7 +441,7 @@ const nameQueue = async.queue((task, cb) => {
 		}, 1000) // 1s
 	}
 
-	async function getPoster(imdbId) {
+	async function getProbeData(imdbId) {
 		const autoBadgeData = settings.itemAutoBadges[imdbId] || settings.autoBadges[parentMediaFolder]
 		if (posterExists && !task.forced) {
 			// don't skip if auto badge turned on and no rpdb.json exists
@@ -465,6 +469,11 @@ const nameQueue = async.queue((task, cb) => {
 			}
 		}
 
+		return Promise.resolve(true);
+
+	}
+
+	async function getPoster(imdbId) {
 		const posterUrl = posterFromImdbId(imdbId, task.type, folderLabel, badgeString, badgePos, badgeSize)
 
 		needle.get(posterUrl, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
@@ -504,12 +513,33 @@ const nameQueue = async.queue((task, cb) => {
 		})
 	}
 
-	function getBackdrop(imdbId) {
+	function getBackdrop(imdbId, mustGetBackdrop) {
 		if (blockBackdrop || (backdropExists && !task.forced)) {
 			endIt()
 			return
 		}
-		const backdropUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/backdrop-default/' + imdbId + '.jpg'
+		let extraQuery = '';
+		if (mustGetBackdrop) {
+			// has rating order or badges
+			if (ratingOrder) {
+				if (extraQuery.includes('?')) extraQuery += '&'
+				else extraQuery += '?'
+				extraQuery += 'order=' + ratingOrder
+			}
+			if (settings.backdropsBadges) {
+				if (settings.itemBadges[imdbId] || badgeString) {
+					if (extraQuery.includes('?')) extraQuery += '&'
+					else extraQuery += '?'
+					extraQuery += 'badges=' + (settings.itemBadges[imdbId] || badgeString)
+				}
+				if (settings.itemBackdropBadgePositions[imdbId] || backdropBadgePos) {
+					if (extraQuery.includes('?')) extraQuery += '&'
+					else extraQuery += '?'
+					extraQuery += 'badgePos=' + (settings.itemBackdropBadgePositions[imdbId] || backdropBadgePos)
+				}
+			}
+		}
+		const backdropUrl = 'https://api.ratingposterdb.com/' + settings.apiKey + '/imdb/backdrop-default/' + imdbId + '.jpg' + extraQuery
 		needle.get(backdropUrl, { response_timeout: 15000, read_timeout: 15000 }, (err, res) => {
 			if (!err && (res || {}).statusCode == 200) {
 				fs.writeFile(path.join(targetFolder, backdropName), res.raw, (err) => {
@@ -537,27 +567,36 @@ const nameQueue = async.queue((task, cb) => {
 		const checkWithin2Years = !!(!task.avoidYearMatch && task.forced && posterExists && settings.overwriteLast2Years)
 		const currentYear = new Date().getFullYear()
 		function retrievePosters() {
-			getPoster(imdbId)
-			if (settings.backdrops) {
-				if (settings.retryFrequency || avoidOptimizedBackdropsScan) {
-					getBackdrop(imdbId)
-				} else {
-					let noBackdrop = false
+			getProbeData(imdbId).then(() => {
+				getPoster(imdbId)
+				if (settings.backdrops) {
+					let mustGetBackdrop = false;
+					if (ratingOrder || (settings.backdropsBadges && badgeString)) {
+						mustGetBackdrop = true;
+					}
+					if (settings.retryFrequency || avoidOptimizedBackdropsScan || mustGetBackdrop) {
+						getBackdrop(imdbId, mustGetBackdrop)
+					} else {
+						let noBackdrop = false
 
-					if (posterExists && !backdropExists)
-						noBackdrop = true
+						if (posterExists && !backdropExists)
+							noBackdrop = true
 
-					// allow checking for backdrop rarely (1/2 times) on the off chance that it received one
-					// this is to reduce hitting request usage as there is a very low chance for a backdrop to be available after the first scan
-					if (noBackdrop && idToYearCache[imdbId] && idToYearCache[imdbId] == currentYear && Math.floor(Math.random() * 2))
-						noBackdrop = false
+						// allow checking for backdrop rarely (1/2 times) on the off chance that it received one
+						// this is to reduce hitting request usage as there is a very low chance for a backdrop to be available after the first scan
+						if (noBackdrop && idToYearCache[imdbId] && idToYearCache[imdbId] == currentYear && Math.floor(Math.random() * 2))
+							noBackdrop = false
 
-					if (!noBackdrop)
-						getBackdrop(imdbId)
-					else
-						endIt()
+						if (!noBackdrop)
+							getBackdrop(imdbId)
+						else
+							endIt()
+					}
 				}
-			}
+			}).catch(e => {
+				console.error(e);
+				endIt();
+			});
 		}
 		function failPosters() {
 			if (checkWithin2Years)
@@ -1267,6 +1306,13 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 		settings.seriesTextless = valSeriesTextless
 		config.set('seriesTextless', settings.seriesTextless)
 	}
+	const backdropsBadges = (req.query || {}).backdropsBadges || false
+	const valBackdropsBadges = backdropsBadges == 1 ? true : false
+	if (settings.backdropsBadges != valBackdropsBadges) {
+		avoidOptimizedBackdropsScan = true
+		settings.backdropsBadges = valBackdropsBadges
+		config.set('backdropsBadges', settings.backdropsBadges)
+	}
 	const usePolling = (req.query || {}).usePolling || false
 	const valUsePolling = usePolling == 1 ? true : false
 	if (settings.usePolling != valUsePolling) {
@@ -1352,6 +1398,7 @@ app.get(baseUrl+'getSettings', (req, res) => passwordValid(req, res, (req, res) 
 		cacheMatches: settings.cacheMatches,
 		movieTextless: settings.movieTextless,
 		seriesTextless: settings.seriesTextless,
+		backdropsBadges: settings.backdropsBadges,
 		moviePosterType: settings.moviePosterType,
 		seriesPosterType: settings.seriesPosterType,
 		movieRatingOrder: settings.movieRatingOrder,
@@ -1444,6 +1491,8 @@ app.get(baseUrl+'getBadgeSettings', (req, res) => passwordValid(req, res, (req, 
 					badgeSettings.badges = settings.itemBadges[imdbId]
 				if (settings.itemBadgePositions[imdbId])
 					badgeSettings.badgePos = settings.itemBadgePositions[imdbId]
+				if (settings.itemBackdropBadgePositions[imdbId])
+					badgeSettings.backdropBadgePos = settings.itemBackdropBadgePositions[imdbId]
 				if (settings.itemBadgeSizes[imdbId])
 					badgeSettings.badgeSize = settings.itemBadgeSizes[imdbId]
 				res.setHeader('Content-Type', 'application/json')
@@ -1461,6 +1510,10 @@ app.get(baseUrl+'getBadgeSettings', (req, res) => passwordValid(req, res, (req, 
 			badgeSettings.badges = settings.badges[mediaName]
 		if (settings.badgePositions[mediaName])
 			badgeSettings.badgePos = settings.badgePositions[mediaName]
+		if (settings.backdropBadgePositions[mediaName])
+			badgeSettings.backdropBadgePos = settings.backdropBadgePositions[mediaName]
+		if (settings.backdropBadgePositions[mediaName])
+			badgeSettings.backdropBadgePos = settings.backdropBadgePositions[mediaName]
 		if (settings.badgeSizes[mediaName])
 			badgeSettings.badgeSize = settings.badgeSizes[mediaName]
 		res.setHeader('Content-Type', 'application/json')
@@ -1486,6 +1539,7 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 	const label = (req.query || {}).label || ''
 	const badges = (req.query || {}).badges || ''
 	const badgePos = (req.query || {}).badgePos || ''
+	const backdropBadgePos = (req.query || {}).backdropBadgePos || ''
 	const badgeSize = (req.query || {}).badgeSize || ''
 	const autoBadges = (req.query || {}).autoBadges || ''
 	if (!folder) {
@@ -1535,6 +1589,13 @@ app.get(baseUrl+'editFolderLabel', (req, res) => passwordValid(req, res, (req, r
 	} else if (settings.badgePositions[folder]) {
 		delete settings.badgePositions[folder]
 		config.set('badgePositions', settings.badgePositions)
+	}
+	if (backdropBadgePos && backdropBadgePos != 'none') {
+		settings.backdropBadgePositions[folder] = backdropBadgePos
+		config.set('backdropBadgePositions', settings.backdropBadgePositions)
+	} else if (settings.backdropBadgePositions[folder]) {
+		delete settings.backdropBadgePositions[folder]
+		config.set('backdropBadgePositions', settings.backdropBadgePositions)
 	}
 	if (badgeSize && badgeSize != 'normal') {
 		settings.badgeSizes[folder] = badgeSize
@@ -2154,6 +2215,7 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 	const mediaLabel = req.query.label
 	const mediaBadges = req.query.badges
 	const mediaBadgePos = req.query.badgePos
+	const mediaBackdropBadgePos = req.query.backdropBadgePos
 	const mediaBadgeSize = req.query.badgeSize
 	const mediaAutoBadges = (req.query || {}).autoBadges || ''
 	folderNameToImdb(mediaName, mediaType, async (imdbId) => {
@@ -2197,6 +2259,13 @@ app.get(baseUrl+'editItemLabel', (req, res) => passwordValid(req, res, (req, res
 			} else {
 				delete settings.itemBadgePositions[imdbId]
 				config.set('itemBadgePositions', settings.itemBadgePositions)
+			}
+			if (mediaBackdropBadgePos && mediaBackdropBadgePos != 'none') {
+				settings.itemBackdropBadgePositions[imdbId] = mediaBackdropBadgePos
+				config.set('itemBackdropBadgePositions', settings.itemBackdropBadgePositions)
+			} else {
+				delete settings.itemBackdropBadgePositions[imdbId]
+				config.set('itemBackdropBadgePositions', settings.itemBackdropBadgePositions)
 			}
 			if (mediaBadgeSize && mediaBadgeSize != 'normal') {
 				settings.itemBadgeSizes[imdbId] = mediaBadgeSize
