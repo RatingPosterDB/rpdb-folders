@@ -668,7 +668,11 @@ const nameQueue = async.queue((task, cb) => {
 
 	let plexMediaFile = false
 
-	if (settings.overwriteMatches[task.type][task.name]) {
+	const parentFolderName = parentMediaFolder ? path.basename(parentMediaFolder) : false
+
+	if (parentFolderName && settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderNam + ']']) {
+		getImages(settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderNam + ']'])
+	} else if (settings.overwriteMatches[task.type][task.name]) {
 		getImages(settings.overwriteMatches[task.type][task.name])
 	} else if (task.imdbId) {
 		settings.overwriteMatches[task.type][task.name] = task.imdbId
