@@ -19,7 +19,8 @@ module.exports = async (mediaFolders, mediaType, unmatchedFolders, missingPoster
 		}
 	} else {
 		for (let i = 0; mediaFolders[i]; i++) {
-			const dirScan = await browser(mediaFolders[i], !!(mediaType == 'movie'))
+			const parentFolder = path.basename(mediaFolders[i])
+			const dirScan = await browser(mediaFolders[i], !!(mediaType == 'movie'), '​ [' + parentFolder + ']')
 			folders = folders.concat(dirScan || [])
 		}
 		return {

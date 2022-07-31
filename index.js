@@ -64,19 +64,33 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 		cb(imdbId)
 	}
 
+	folderName = folderName || ''
+
+	let parentFolder = false
+
+	if (folderName.includes('​ [')) {
+		parentFolder = folderName.split('​ [')[1].slice(0, -1)
+		folderName = folderName.split('​ [')[0]
+	}
+
 	// is it already an IMDB ID?
 	if (folderName.startsWith('tt') && !isNaN(folderName.replace('tt',''))) {
 		respond(folderName)
 		return
 	}
 
-	folderName = folderName || ''
-
 	// we skip cache to ensure item is not from last 2 years
 	// if it is, we will check the cache again later on
 	const skipCache = !!(!avoidYearMatch && isForced && posterExists && settings.overwriteLast2Years)
 
 	if (!skipCache) {
+		if (parentFolder) {
+			const cachedWithFolder = getCached(folderName + '​ [' + parentFolder + ']', folderType)
+			if (cachedWithFolder) {
+				respond(cachedWithFolder)
+				return
+			}
+		}
 		const cached = getCached(folderName, folderType)
 		if (cached) {
 			respond(cached)
@@ -145,6 +159,22 @@ function folderNameToImdb(folderName, folderType, cb, isForced, posterExists, av
 	if (skipCache) {
 		// figure out the year of the media
 		const currentYear = new Date().getFullYear()
+
+		if (parentFolder) {
+			// figure out the year of the media
+			const cachedWithFolder = getCached(folderName + '​ [' + parentFolder + ']', folderType, true)
+			if (cachedWithFolder) {
+				if (within2Years(obj.year, currentYear)) {
+					respond(cachedWithFolder)
+				} else if (!obj.year) {
+					respond(cachedWithFolder)
+				} else {
+					respond(false, true)
+				}
+				return
+			}
+		}
+
 		const cached = getCached(folderName, folderType, true)
 		if (cached) {
 			if (within2Years(obj.year, currentYear)) {
@@ -1512,8 +1542,6 @@ app.get(baseUrl+'getBadgeSettings', (req, res) => passwordValid(req, res, (req, 
 			badgeSettings.badgePos = settings.badgePositions[mediaName]
 		if (settings.backdropBadgePositions[mediaName])
 			badgeSettings.backdropBadgePos = settings.backdropBadgePositions[mediaName]
-		if (settings.backdropBadgePositions[mediaName])
-			badgeSettings.backdropBadgePos = settings.backdropBadgePositions[mediaName]
 		if (settings.badgeSizes[mediaName])
 			badgeSettings.badgeSize = settings.badgeSizes[mediaName]
 		res.setHeader('Content-Type', 'application/json')
@@ -1653,6 +1681,11 @@ app.get(baseUrl+'setApiKey', (req, res) => passwordValid(req, res, (req, res) =>
 function changePosterForFolder(folder, imdbId, type) {
 	return new Promise((resolve, reject) => {
 		if (folder && imdbId && type) {
+			let parentFolder = false
+			if (folder.includes('​ [')) {
+				parentFolder = folder.split('​ [')[1].slice(0, -1)
+				folder = folder.split('​ [')[0]
+			}
 			if (folder == imdbId) {
 				// IMDB ID used as Folder Name
 				var foundName = false
@@ -1682,7 +1715,12 @@ function changePosterForFolder(folder, imdbId, type) {
 			})
 			if (mediaFolders.length) {
 				let allFolders = []
-				mediaFolders.forEach(mediaFolder => { allFolders = allFolders.concat(getDirectories(mediaFolder, !!(type == 'movie'))) })
+				mediaFolders.forEach(mediaFolder => {
+					if (parentFolder && parentFolder !== path.basename(mediaFolder)) {
+						return
+					}
+					allFolders = allFolders.concat(getDirectories(mediaFolder, !!(type == 'movie')))
+				})
 
 				if (allFolders.length) {
 					const simplifiedFolder = folder.trim().toLowerCase()
@@ -1692,7 +1730,7 @@ function changePosterForFolder(folder, imdbId, type) {
 						if (fldrName.trim().toLowerCase() == simplifiedFolder) {
 							folderMatch = fldrName
 
-							settings.overwriteMatches[type][folderMatch] = imdbId
+							settings.overwriteMatches[type][folderMatch + (parentFolder ? '​ [' + parentFolder + ']' : '')] = imdbId
 							config.set('overwriteMatches', settings.overwriteMatches)
 
 							if (fileHelper.isVideo(fldrName)) {

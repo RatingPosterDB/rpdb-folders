@@ -15,7 +15,7 @@ const getDirectories = (source, withVideos) => { try { return fs.readdirSync(sou
 
 const winNetDrive = require('windows-network-drive')
 
-module.exports = async (folder, withVideos) => {
+module.exports = async (folder, withVideos, append) => {
 
 	if (!folder && isDocker())
 		folder = '/rpdb/mounts'
@@ -24,6 +24,8 @@ module.exports = async (folder, withVideos) => {
 		const label = path.split(fs.sep).pop()
 		if (label.startsWith('.'))
 			return null
+		if (append)
+			path += append
 		return { path, label }
 	}).filter(el => !!el)
 
