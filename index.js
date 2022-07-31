@@ -1402,7 +1402,7 @@ app.get(baseUrl+'setSettings', (req, res) => passwordValid(req, res, (req, res) 
 	}
 	const seriesRatingOrder = (req.query || {}).seriesRatingOrder || ''
 	if (seriesRatingOrder != settings.seriesRatingOrder) {
-		settings.seriesRatingOrder = seiresRatingOrder
+		settings.seriesRatingOrder = seriesRatingOrder
 		config.set('seriesRatingOrder', settings.seriesRatingOrder)
 	}
 	res.setHeader('Content-Type', 'application/json')
