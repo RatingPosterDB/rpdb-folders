@@ -670,8 +670,8 @@ const nameQueue = async.queue((task, cb) => {
 
 	const parentFolderName = parentMediaFolder ? path.basename(parentMediaFolder) : false
 
-	if (parentFolderName && settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderNam + ']']) {
-		getImages(settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderNam + ']'])
+	if (parentFolderName && settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderName + ']']) {
+		getImages(settings.overwriteMatches[task.type][task.name + '​ [' + parentFolderName + ']'])
 	} else if (settings.overwriteMatches[task.type][task.name]) {
 		getImages(settings.overwriteMatches[task.type][task.name])
 	} else if (task.imdbId) {
