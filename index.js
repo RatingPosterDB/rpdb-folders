@@ -899,7 +899,8 @@ function startWatcher() {
 			dedupWatcher[el] = true
 			// lock folder events for 2m, so other FS events don't duplicate it
 			setTimeout(() => {
-				delete dedupWatcher[el]
+				if (dedupWatcher[el])
+					delete dedupWatcher[el]
 			}, 120 * 60 * 1000)
 			nameQueue.push({ name, folder: el, type, forced: false }) 
 		})
@@ -2397,6 +2398,8 @@ app.post(baseUrl+'radarr', (req, res) => {
 	}
 })
 
+const dedupSonarr = {}
+
 app.post(baseUrl+'sonarr', (req, res) => {
 	if (settings.pass) {
 		let passedCheck = false
@@ -2417,6 +2420,17 @@ app.post(baseUrl+'sonarr', (req, res) => {
 	}
 	if ((req.body || {}).eventType == 'Download' && !req.body.isUpgrade && (req.body.series || {}).path) {
 		let folderPath = req.body.series.path
+		// Sonarr can send duplicate events when moving multiple episodes
+		if (dedupSonarr[folderPath]) {
+			logging.log(`Detected duplicate event from Sonarr for "${folderPath}", ignoring excess event`)
+			return
+		}
+		dedupSonarr[folderPath] = true
+		// lock sonarr events for this folder for 1m
+		setTimeout(() => {
+			if (dedupSonarr[folderPath])
+				delete dedupSonarr[folderPath]
+		}, 60 * 60 * 1000)
 		const fldrName = folderPath.split(path.sep).pop()
 		logging.log('Sonarr Webhook Log: Received download event for: ' + folderPath)
 		if (!fs.existsSync(folderPath)) {
