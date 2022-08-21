@@ -861,6 +861,10 @@ function startWatcher() {
 			ignoreInitial: settings.ignoreInitialScan || false,
 		})
 
+		// the watcher can duplicate events by sending both
+		// folder and file events for same new folder
+		const dedupWatcher = {}
+
 		watcher.on('addDir', el => {
 			let type
 			let parentFolder
@@ -892,6 +896,11 @@ function startWatcher() {
 			if (name.toLowerCase() == 'new folder')
 				return
 			logging.log(`Directory ${name} has been added to ${type}`)
+			dedupWatcher[el] = true
+			// lock folder events for 2m, so other FS events don't duplicate it
+			setTimeout(() => {
+				delete dedupWatcher[el]
+			}, 120 * 60 * 1000)
 			nameQueue.push({ name, folder: el, type, forced: false }) 
 		})
 
@@ -915,9 +924,14 @@ function startWatcher() {
 			if (type !== 'movie') {
 				return
 			}
-			logging.log(`File ${name} has been added to ${type}`)
 			const nameNoExt = fileHelper.removeExtension(name)
-			nameQueue.push({ name, folder: path.dirname(el), type, forced: false, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg' }) 
+			const watcherFolder = path.dirname(el)
+			if (dedupWatcher[watcherFolder]) {
+				logging.log(`Duplicated folder event for "${watcherFolder}" from FS Events, canceling file specific event`)
+				return
+			}
+			logging.log(`File ${name} has been added to ${type}`)
+			nameQueue.push({ name, folder: watcherFolder, type, forced: false, isFile: true, posterName: nameNoExt + '.jpg', backdropName: nameNoExt + '-fanart.jpg' }) 
 		})
 
 	}
