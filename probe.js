@@ -325,6 +325,11 @@ const probe = (fileLoc, isDirectFile, isSeries, imdbId, overwriteProbeData) => {
 				fileDb.matchedImdbByMediaInfo = false
 				fileDb.imdbId = imdbId
 			}
+			if (!fileDb.isHdr) {
+				const lowerCaseFilename = (filename || '').toLowerCase()
+				if (['[hdr]','[hdr10]','[hdr10+]','{hdr}','{hdr10}','{hdr10+}'].some(el => lowerCaseFilename.includes(el)))
+					fileDb.isHdr = true
+			}
 		}
 
 		try {
