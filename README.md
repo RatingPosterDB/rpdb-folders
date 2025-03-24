@@ -8,9 +8,17 @@ See screenshots of [Rating Posters in Various Apps](https://ratingposterdb.com/#
 
 ## Downloads
 
-- [Windows RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/win-rpdb-folders.zip)
-- [OSX RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/osx-rpdb-folders.zip)
-- [Linux RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/linux-rpdb-folders.zip)
+**64bit:**
+
+- [Windows RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/win-rpdb-folders-x64.zip)
+- [OSX RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/osx-rpdb-folders-x64.zip)
+- [Linux RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/linux-rpdb-folders-x64.zip)
+- [Docker RPDB Folders](https://hub.docker.com/r/jaruba/rpdb-folders-docker)
+
+**ARM64:**
+
+- [OSX RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/osx-rpdb-folders-arm64.zip)
+- [Linux RPDB Folders](https://github.com/RatingPosterDB/rpdb-folders/releases/latest/download/linux-rpdb-folders-arm64.zip)
 - [Docker RPDB Folders](https://hub.docker.com/r/jaruba/rpdb-folders-docker)
 
 Note: If (for any reason) the settings web page does not open by itself after running the application, then open `http://127.0.0.1:8750/` in your browser.
