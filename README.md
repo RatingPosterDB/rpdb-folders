@@ -51,6 +51,16 @@ Recommended movie folder names (in order of priority):
 - `WandaVision` (accepted, not recommended)
 - anything else (accepted, might or might not match correctly)
 
+### IDs in Folder Names
+
+IMDB/TMDB/TVDB IDs can be included in the folder names in the following patterns:
+- `WandaVision (2021) [imdb-tt9140560]` / `WandaVision (2021) [imdb:tt9140560]` / `WandaVision (2021) [imdb=tt9140560]`
+- `WandaVision (2021) {imdb-tt9140560}` / `WandaVision (2021) {imdb:tt9140560}` / `WandaVision (2021) {imdb=tt9140560}`
+- `WandaVision (2021) [tmdb-85271]` / `WandaVision (2021) [tmdb:85271]` / `WandaVision (2021) [tmdb=85271]`
+- `WandaVision (2021) {tmdb-85271}` / `WandaVision (2021) {tmdb:85271}` / `WandaVision (2021) {tmdb=85271}`
+- `WandaVision (2021) [tvdb-362392]` / `WandaVision (2021) [tvdb:362392]` / `WandaVision (2021) [tvdb=362392]`
+- `WandaVision (2021) {tvdb-362392}` / `WandaVision (2021) {tvdb:362392}` / `WandaVision (2021) {tvdb=362392}`
+
 Don't know where to start? Check out the [Quick Start Guide](https://github.com/RatingPosterDB/rpdb-folders/wiki/Quick-Start-Guide)!
 
 ## Notes
