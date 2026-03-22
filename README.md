@@ -74,5 +74,5 @@ Don't know where to start? Check out the [Quick Start Guide](https://github.com/
 
 ## Screenshot
 
-![rpdb-folders-screenshot](https://user-images.githubusercontent.com/1777923/120939500-09f79200-c721-11eb-8e82-3db011eb20b3.jpg)
+![rpdb-folders-preview](https://github.com/user-attachments/assets/1b2a35ae-06f1-4716-b7f6-f0c7c739875f)
 
